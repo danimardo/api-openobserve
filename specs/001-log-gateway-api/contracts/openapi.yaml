@@ -1,0 +1,321 @@
+openapi: 3.1.0
+info:
+  title: Log Gateway API
+  version: "1.0.0"
+  description: >
+    API intermedia (log gateway) sobre OpenObserve. Recibe logs de aplicaciones
+    propias (backend/frontend) mediante API keys y los reenvía a OpenObserve sin
+    exponer credenciales internas. Contrato del MVP de la feature 001-log-gateway-api.
+    Fuente normativa: spec.md y constitution.md. Contrato definido antes de implementar
+    (principio V, contract-first).
+servers:
+  - url: /api/v1
+security:
+  - ApiKeyBearer: []
+tags:
+  - name: Ingesta
+  - name: Consulta
+  - name: Descubrimiento
+  - name: Operación
+
+paths:
+  /logs:
+    post:
+      tags: [Ingesta]
+      summary: Ingestar uno o varios eventos de log
+      description: Acepta un único LogEvent o un array. Encola y responde 202 (FR-001, FR-007).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/LogEventInput'
+                - type: array
+                  items: { $ref: '#/components/schemas/LogEventInput' }
+      responses:
+        '202': { $ref: '#/components/responses/IngestAccepted' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /logs/batch:
+    post:
+      tags: [Ingesta]
+      summary: Ingestar un lote de eventos (array obligatorio)
+      description: >
+        Exige un array. Soporta Content-Encoding: gzip. Aceptación parcial con
+        conteos y errores por índice (FR-002, FR-003, US6). El límite de tamaño
+        se aplica al body comprimido y al JSON descomprimido (FR-031).
+      parameters:
+        - in: header
+          name: Content-Encoding
+          required: false
+          schema: { type: string, enum: [gzip] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/LogEventInput' }
+      responses:
+        '202': { $ref: '#/components/responses/IngestAccepted' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /logs:get:
+    parameters: []
+  /logs/query:
+    get:
+      operationId: queryLogs
+      tags: [Consulta]
+      summary: Consultar logs por servicio con filtros seguros
+      description: >
+        Nota: la ruta real es GET /api/v1/logs. Se documenta aquí como entrada
+        independiente porque OpenAPI no permite dos operaciones en el mismo path+method.
+        Exige `service`. SQL por allowlist y escape (FR-015, FR-016). Frontend con
+        alcance reducido (FR-018).
+      parameters:
+        - { in: query, name: service, required: true, schema: { type: string, pattern: '^[a-z0-9_]{3,64}$' } }
+        - { in: query, name: from, required: false, schema: { type: string }, description: 'Default now-1h' }
+        - { in: query, name: to, required: false, schema: { type: string }, description: 'Default now' }
+        - { in: query, name: level, required: false, schema: { type: string }, description: 'Uno o varios niveles separados por coma' }
+        - { in: query, name: env, required: false, schema: { type: string } }
+        - { in: query, name: q, required: false, schema: { type: string }, description: 'Prohibido para keys frontend' }
+        - { in: query, name: trace_id, required: false, schema: { type: string } }
+        - { in: query, name: request_id, required: false, schema: { type: string } }
+        - { in: query, name: limit, required: false, schema: { type: integer, default: 100, maximum: 1000 } }
+        - { in: query, name: cursor, required: false, schema: { type: string }, description: 'Cursor opaco de respuesta previa' }
+        - { in: query, name: sort, required: false, schema: { type: string, enum: [asc, desc], default: desc } }
+        - { in: query, name: include_total, required: false, schema: { type: boolean, default: false }, description: 'Solo keys backend/internas; costoso' }
+      responses:
+        '200':
+          description: Resultados de consulta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueryResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '502': { $ref: '#/components/responses/OpenObserveError' }
+
+  /services:
+    get:
+      tags: [Descubrimiento]
+      summary: Capacidades de la API key actual
+      description: Devuelve servicios, entornos, scopes y límites de la key; nunca hashes/secretos ni datos de otras keys (FR-027, US8).
+      responses:
+        '200':
+          description: Capacidades de la key
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServicesInfo' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /health:
+    get:
+      tags: [Operación]
+      summary: Liveness (público)
+      description: 200 si el proceso vive; no comprueba OpenObserve (FR-028). No requiere API key.
+      security: []
+      responses:
+        '200':
+          description: Proceso vivo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [ok] }
+
+  /health/ready:
+    get:
+      tags: [Operación]
+      summary: Readiness (público)
+      description: 200 si conecta con OpenObserve y la config es válida; 503 si no (FR-028). No requiere API key.
+      security: []
+      responses:
+        '200':
+          description: Listo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [ready] }
+        '503':
+          description: No listo (OpenObserve inaccesible o config inválida)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [not_ready] }
+
+  /metrics:
+    get:
+      tags: [Operación]
+      summary: Métricas Prometheus (público)
+      description: >
+        Formato de exposición Prometheus con las métricas mínimas (FR-029, SC-009).
+        No requiere API key.
+      security: []
+      responses:
+        '200':
+          description: Métricas en formato Prometheus
+          content:
+            text/plain:
+              schema: { type: string }
+
+components:
+  securitySchemes:
+    ApiKeyBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: "key_id.secret"
+      description: >
+        Authorization: Bearer <key_id>.<secret>. El servidor separa por el primer '.',
+        busca por key_id y compara sha256(secret) con secret_hash en tiempo constante (FR-020, FR-025).
+
+  schemas:
+    LogEventInput:
+      type: object
+      required: [service, env, level, message]
+      properties:
+        _timestamp:
+          oneOf: [ { type: string, description: ISO-8601 }, { type: integer, format: int64, description: microsegundos } ]
+        service: { type: string, pattern: '^[a-z0-9_]{3,64}$' }
+        env: { type: string, description: 'Dentro de ALLOWED_ENVS' }
+        level: { type: string, description: 'Normalizable a trace|debug|info|warn|error|fatal' }
+        message: { type: string, minLength: 1, description: 'Máx LOG_MESSAGE_MAX_CHARS' }
+        version: { type: string }
+        event_id: { type: string }
+        trace_id: { type: string }
+        span_id: { type: string }
+        request_id: { type: string }
+        hostname: { type: string }
+        source: { type: string, enum: [backend, frontend], description: 'Valor desconocido se normaliza a unknown' }
+        context: { type: object, additionalProperties: true }
+      additionalProperties:
+        description: 'Campos raíz no reconocidos se mueven a context.extra'
+
+    LogEventReduced:
+      type: object
+      description: Respuesta reducida para keys frontend (FR-018)
+      properties:
+        _timestamp: { oneOf: [ { type: string }, { type: integer, format: int64 } ] }
+        level: { type: string }
+        message: { type: string }
+        service: { type: string }
+        env: { type: string }
+        request_id: { type: string }
+        trace_id: { type: string }
+        context: { type: object, additionalProperties: true, description: 'Sin campos sensibles/conocidos' }
+
+    IngestResult:
+      type: object
+      required: [accepted, rejected]
+      properties:
+        accepted: { type: integer }
+        rejected: { type: integer }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index: { type: integer }
+              code: { type: string }
+              message: { type: string }
+        request_id: { type: string }
+
+    QueryResult:
+      type: object
+      required: [items, request_id]
+      properties:
+        items:
+          type: array
+          items:
+            oneOf:
+              - { $ref: '#/components/schemas/LogEventInput' }
+              - { $ref: '#/components/schemas/LogEventReduced' }
+        next_cursor: { type: [string, "null"], description: 'Cursor opaco; null si no hay más páginas' }
+        range_truncated: { type: boolean }
+        limit_truncated: { type: boolean }
+        total: { type: integer, description: 'Ausente por defecto; solo con include_total=true en keys backend' }
+        request_id: { type: string }
+
+    ServicesInfo:
+      type: object
+      properties:
+        services: { type: array, items: { type: string } }
+        envs: { type: array, items: { type: string } }
+        scopes: { type: array, items: { type: string, enum: [read, write] } }
+        limits:
+          type: object
+          properties:
+            max_query_window: { type: string }
+            max_limit: { type: integer }
+            allow_q: { type: boolean }
+            response_profile: { type: string, enum: [full, frontend_reduced] }
+
+    Error:
+      type: object
+      required: [error, request_id]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: {}
+        request_id: { type: string }
+
+  responses:
+    IngestAccepted:
+      description: Al menos un registro aceptado (aceptación parcial posible)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/IngestResult' }
+    ValidationError:
+      description: JSON malformado, sin registros válidos, service ausente o batch no-array
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Sin Bearer, token sin '.', key_id inexistente o secreto no coincidente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Falta scope/acceso a service, o restricción frontend (q / service / env)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    PayloadTooLarge:
+      description: Supera INGEST_MAX_BODY_MB (comprimido o descomprimido) o INGEST_MAX_BATCH
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    UnsupportedMediaType:
+      description: Content-Type no soportado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: Supera RATE_LIMIT_RPS o cola llena (QUEUE_MAX_ITEMS)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    OpenObserveError:
+      description: Fallo de OpenObserve en consulta síncrona
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
