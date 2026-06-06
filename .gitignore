@@ -1,0 +1,22 @@
+# Logs de desarrollo local (se sobrescriben en cada arranque; no versionar)
+.logs/
+
+# Dependencias
+node_modules/
+
+# Artefactos de build
+dist/
+build/
+
+# Cobertura y reportes de test
+coverage/
+*.lcov
+
+# Variables de entorno con secretos (mantener solo .env.example)
+.env
+.env.*
+!.env.example
+
+# Sistema operativo / editor
+Thumbs.db
+.DS_Store
