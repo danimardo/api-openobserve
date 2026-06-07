@@ -113,7 +113,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"service\": \"pruebas\",\n  \"env\": \"production\",\n  \"level\": \"info\",\n  \"message\": \"Payment processed\",\n  \"amount\": 9.99,\n  \"request_id\": \"req-abc123\"\n}",
+              "raw": "{\n  \"service\": \"pruebas\",\n  \"env\": \"prod\",\n  \"level\": \"info\",\n  \"message\": \"Payment processed\",\n  \"amount\": 9.99,\n  \"request_id\": \"req-abc123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -145,7 +145,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "[\n  {\n    \"service\": \"pruebas\",\n    \"env\": \"production\",\n    \"level\": \"info\",\n    \"message\": \"Batch event 1\"\n  },\n  {\n    \"service\": \"pruebas\",\n    \"env\": \"production\",\n    \"level\": \"warn\",\n    \"message\": \"Batch event 2\"\n  }\n]",
+              "raw": "[\n  {\n    \"service\": \"pruebas\",\n    \"env\": \"prod\",\n    \"level\": \"info\",\n    \"message\": \"Batch event 1\"\n  },\n  {\n    \"service\": \"pruebas\",\n    \"env\": \"prod\",\n    \"level\": \"warn\",\n    \"message\": \"Batch event 2\"\n  }\n]",
               "options": {
                 "raw": {
                   "language": "json"
@@ -177,12 +177,12 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&env=production&level=info&limit=50",
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&env=prod&level=info&limit=50",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "logs"],
               "query": [
                 { "key": "service", "value": "pruebas" },
-                { "key": "env", "value": "production" },
+                { "key": "env", "value": "prod" },
                 { "key": "level", "value": "info" },
                 { "key": "limit", "value": "50" }
               ]
@@ -202,12 +202,12 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&env=production&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z&limit=100",
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&env=prod&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z&limit=100",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "logs"],
               "query": [
                 { "key": "service", "value": "pruebas" },
-                { "key": "env", "value": "production" },
+                { "key": "env", "value": "prod" },
                 { "key": "from", "value": "2025-01-01T00:00:00Z" },
                 { "key": "to", "value": "2025-01-02T00:00:00Z" },
                 { "key": "limit", "value": "100" }

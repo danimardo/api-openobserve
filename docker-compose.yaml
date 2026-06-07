@@ -72,15 +72,22 @@ services:
       O2_AUTH_USER:     ${O2_AUTH_USER}
       O2_AUTH_PASSWORD: ${O2_AUTH_PASSWORD}
 
-      # ── API Keys: método A — fichero montado (recomendado) ────────────────
-      # Descomenta API_KEYS_JSON y comenta esta línea si usas el método B.
-      API_KEYS_FILE: /run/secrets/api-keys.json
-
-      # ── API Keys: método B — JSON inline (alternativa) ────────────────────
-      # API_KEYS_JSON: ${API_KEYS_JSON}
+      # ── API Keys: configura UNO de los dos métodos (nunca ambos) ────────────
+      #
+      # Método A — fichero montado (Docker local y Coolify Opción B):
+      #   - Define API_KEYS_FILE en .env o deja el default.
+      #   - Monta el fichero con el bloque 'volumes' de más abajo.
+      #   - Para Coolify Opción A (JSON), pon API_KEYS_FILE= (vacío) en la UI.
+      API_KEYS_FILE: ${API_KEYS_FILE:-/run/secrets/api-keys.json}
+      #
+      # Método B — JSON inline (recomendado para Coolify Opción A):
+      #   - Descomenta la línea siguiente y define API_KEYS_JSON en .env o en
+      #     la sección Environment de Coolify (marca como Secret).
+      #   - Comenta la línea API_KEYS_FILE de arriba.
+      # API_KEYS_JSON: ${API_KEYS_JSON:-}
 
       # ── Entornos permitidos ───────────────────────────────────────────────
-      ALLOWED_ENVS: ${ALLOWED_ENVS:-production,staging,development,test}
+      ALLOWED_ENVS: ${ALLOWED_ENVS:-prod,staging,dev,test}
 
       # ── Límites de ingesta ────────────────────────────────────────────────
       INGEST_MAX_BATCH:       ${INGEST_MAX_BATCH:-1000}
@@ -93,7 +100,7 @@ services:
       # ── Cola y entrega a OpenObserve ──────────────────────────────────────
       QUEUE_MAX_ITEMS:    ${QUEUE_MAX_ITEMS:-10000}
       RETRY_ATTEMPTS:     ${RETRY_ATTEMPTS:-3}
-      RETRY_BACKOFF_MS:   ${RETRY_BACKOFF_MS:-200}
+      RETRY_BACKOFF_MS:   ${RETRY_BACKOFF_MS:-200,1000,5000}
       DELIVERY_BATCH_MAX: ${DELIVERY_BATCH_MAX:-500}
       DELIVERY_FLUSH_MS:  ${DELIVERY_FLUSH_MS:-1000}
 

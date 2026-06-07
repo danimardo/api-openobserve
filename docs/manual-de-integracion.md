@@ -33,8 +33,11 @@
   4. [3.4. Enviar tu primer log](#34-enviar-tu-primer-log)
 4. [Autenticación con API keys](#4-autenticación-con-api-keys)
   1. [Formato del token](#formato-del-token)
-  2. [Errores de autenticación](#errores-de-autenticación)
-  3. [Scopes disponibles](#scopes-disponibles)
+  2. [Cómo crear una API key](#cómo-crear-una-api-key)
+  3. [Cómo configurar varias API keys](#cómo-configurar-varias-api-keys)
+  4. [Gestión de keys en Coolify (producción)](#gestión-de-api-keys-en-coolify-producción)
+  5. [Errores de autenticación](#errores-de-autenticación)
+  6. [Scopes disponibles](#scopes-disponibles)
 5. [Enviar logs — endpoint de ingesta](#5-enviar-logs--endpoint-de-ingesta)
   1. [`POST /api/v1/logs`](#post-apiv1logs)
     1. [Enviar un único evento](#enviar-un-único-evento)
@@ -181,9 +184,9 @@ Ejemplos válidos: `payments_api`, `web_shop`, `auth_service`, `my_app`.
 
 ### 🏷️ Entorno (env)
 
-Cada log pertenece a un entorno: `production`, `staging`, `development`, `test` (u
-otros que configure el operador). Esto permite filtrar logs por entorno y aplicar
-distintas políticas de retención.
+Cada log pertenece a un entorno: `prod`, `staging`, `dev`, `test` (u
+otros que configure el operador mediante `ALLOWED_ENVS`). Esto permite filtrar logs
+por entorno y aplicar distintas políticas de retención.
 
 ### 🔑 API key
 
@@ -269,7 +272,7 @@ curl -X POST https://logs.tuempresa.com/api/v1/logs \
   -H "Authorization: Bearer key-a1b2c3d4e5f6.tu-secreto-aqui" \
   -d '{
     "service": "payments_api",
-    "env": "production",
+    "env": "prod",
     "level": "info",
     "message": "Pago procesado correctamente"
   }'
@@ -354,7 +357,7 @@ Bearer token: key-0226d045f7ee104d.8f3k2j1m9n4q7r6s...
 | `scopes` | Qué puede hacer: `"write"` (enviar logs), `"read"` (consultar logs). | `["write"]` |
 | `client_type` | `"backend"` (servidor) o `"frontend"` (navegador). Cambia los límites y restricciones. | `"backend"` |
 | `allowed_origins` | Orígenes CORS permitidos. Solo relevante para keys frontend. Vacío = sin restricción CORS adicional. | `["https://miapp.com"]` |
-| `envs` | (Opcional) Restringe a entornos concretos. Si se omite, permite todos los de `ALLOWED_ENVS`. | `["production"]` |
+| `envs` | (Opcional) Restringe a entornos concretos. Si se omite, permite todos los de `ALLOWED_ENVS`. | `["prod"]` |
 
 ---
 
@@ -439,6 +442,137 @@ API_KEYS_JSON=[{"id":"key-pagos-001","secret_hash":"abc123...","services":["pago
 
 ---
 
+### 🚀 Gestión de API keys en Coolify (producción)
+
+En producción con Coolify, la situación es diferente a local: el contenedor Docker
+tiene su propio sistema de ficheros aislado, y el fichero `secrets/api-keys.json`
+de tu máquina **no está dentro del contenedor** de forma automática. Necesitas
+una estrategia explícita para pasarle las keys al proceso.
+
+Tienes dos opciones:
+
+#### Opción A — Variable de entorno `API_KEYS_JSON` ✅ **Recomendada para Coolify**
+
+En lugar de leer un fichero, el gateway acepta el contenido JSON directamente como
+variable de entorno. Coolify tiene una sección **Environment Variables** en la UI
+donde puedes configurarlas y marcarlas como **Secret** (se cifran en reposo).
+
+**Configuración en Coolify** (Environment Variables de tu aplicación):
+
+| Variable | Valor | Tipo sugerido |
+|---|---|---|
+| `API_KEYS_JSON` | Array JSON completo en una sola línea | **Secret** (cifrado) |
+| `API_KEYS_FILE` | *(dejar vacío — valor: ninguno o cadena vacía)* | Normal |
+
+> ⚠️ Es importante que `API_KEYS_FILE` quede vacío en Coolify cuando uses esta opción.
+> El `docker-compose.yaml` tiene un default (`/run/secrets/api-keys.json`) que se aplica
+> si no se sobreescribe; si ese fichero no existe en el contenedor y el gateway lo busca,
+> fallará al arrancar. Pon `API_KEYS_FILE` explícitamente vacío en Coolify para
+> desactivar ese default.
+
+El valor de `API_KEYS_JSON` debe ser una línea sin saltos:
+
+```
+[{"id":"key-pagos","secret_hash":"abc123...","services":["pagos_api"],"scopes":["write","read"],"client_type":"backend","allowed_origins":[]},{"id":"key-tienda","secret_hash":"def456...","services":["tienda"],"scopes":["write"],"client_type":"backend","allowed_origins":[]}]
+```
+
+> 💡 **Truco**: edita el JSON en un editor con formato, cópialo y pégalo en Coolify.
+> Coolify almacena el valor tal cual (una línea), pero tú lo editas cómodamente
+> en local antes de pegar.
+
+**Flujo completo para añadir una nueva key:**
+
+1. En tu máquina local, ejecuta:
+   ```bash
+   npm run keygen
+   ```
+   Obtienes tres valores:
+   - `key_id` — parte del token Bearer
+   - `secret` — parte del token Bearer (dáselo al desarrollador, **no lo guardes en ningún sitio**)
+   - `secret_hash` — lo que tú guardas en la configuración del gateway
+
+2. Construye el objeto de la nueva key:
+   ```json
+   {"id":"key-nueva-app","secret_hash":"EL_HASH_GENERADO","services":["nueva_app"],"scopes":["write"],"client_type":"backend","allowed_origins":[]}
+   ```
+
+3. En Coolify → tu app → **Environment Variables** → busca `API_KEYS_JSON` → añade el nuevo objeto al array → guarda.
+
+4. En Coolify → tu app → **Restart** (no *Redeploy*; reiniciar el contenedor es suficiente y mucho más rápido que reconstruir la imagen).
+
+5. Dale al desarrollador el Bearer token: `key-nueva-app.EL_SECRET_GENERADO`.
+
+#### Opción B — Fichero montado como volumen
+
+Si tienes acceso SSH al servidor donde corre Coolify y prefieres gestionar un JSON
+con formato legible (más cómodo con muchas keys), puedes montar el fichero directamente
+dentro del contenedor.
+
+**Paso 1** — Crea el fichero en el servidor:
+
+```bash
+ssh tu-servidor
+mkdir -p /data/log-gateway/secrets
+nano /data/log-gateway/secrets/api-keys.json
+```
+
+El contenido es el mismo array JSON del fichero local, con formato legible:
+
+```json
+[
+  {
+    "id": "key-pagos",
+    "secret_hash": "abc123...",
+    "services": ["pagos_api"],
+    "scopes": ["write", "read"],
+    "client_type": "backend",
+    "allowed_origins": []
+  }
+]
+```
+
+**Paso 2** — En Coolify → tu app → **Storages** (o Volumes, según versión) → añade un bind mount:
+
+| Campo | Valor |
+|---|---|
+| Source (ruta en el servidor) | `/data/log-gateway/secrets/api-keys.json` |
+| Destination (ruta en el contenedor) | `/run/secrets/api-keys.json` |
+| Mode | Read-only |
+
+**Paso 3** — En Coolify → Environment Variables → configura:
+
+| Variable | Valor |
+|---|---|
+| `API_KEYS_FILE` | `/run/secrets/api-keys.json` |
+| `API_KEYS_JSON` | *(no configurar, o eliminar)* |
+
+**Flujo para añadir una nueva key:**
+
+1. `npm run keygen` → obtienes `key_id`, `secret` y `secret_hash`.
+2. SSH al servidor:
+   ```bash
+   nano /data/log-gateway/secrets/api-keys.json
+   ```
+   Añade el nuevo objeto al array y guarda.
+3. En Coolify → **Restart**. No hace falta redeploy.
+4. Da el Bearer token al desarrollador.
+
+#### ¿Cuál elegir?
+
+| | Opción A (`API_KEYS_JSON`) | Opción B (fichero montado) |
+|---|---|---|
+| Acceso SSH al servidor necesario | No | Sí (para editar el fichero) |
+| Gestión desde Coolify UI | Sí, todo desde el navegador | Solo el restart; la edición es por SSH |
+| Formato del JSON al editar | Una línea (edita en local y pega) | Con saltos de línea (más legible) |
+| Keys cifradas en reposo | Sí (Coolify cifra los Secrets) | Depende de los permisos del servidor |
+| Recomendado cuando | Tienes ≤ 5-10 keys | Tienes muchas keys o rotas frecuentemente |
+
+> ⚠️ **Importante**: en ambas opciones, el `secret` generado por `npm run keygen` **solo
+> existe en el momento en que lo generas**. No se almacena en ningún sitio.
+> Si lo pierdes, tendrás que generar una nueva key y actualizar la configuración.
+
+---
+
 ### 🖥️ Backend vs 🌐 Frontend — qué key usar en cada caso
 
 La diferencia entre ambos tipos no es cosmética: cambia los límites y las
@@ -487,8 +621,9 @@ daño si alguien la encuentra.
 }
 ```
 
-- `allowed_origins` → **obligatorio** para keys frontend. El gateway rechaza
-  peticiones desde dominios que no estén en esta lista.
+- `allowed_origins` → **muy recomendado** para keys frontend. Si se configura,
+  el gateway rechaza peticiones CORS desde dominios que no estén en esta lista.
+  Si se deja vacío, no se aplica ninguna restricción de origen adicional.
 - Solo puede acceder al `service` y `env` que tenga autorizado, nada más.
 - **No puede usar** el parámetro `q` (búsqueda de texto libre).
 - Límite de consulta: máximo 500 resultados (aunque pidas más, se recorta).
@@ -604,7 +739,7 @@ curl -X POST https://logs.tuempresa.com/api/v1/logs \
   -H "Authorization: Bearer <tu-token>" \
   -d '{
     "service": "payments_api",
-    "env": "production",
+    "env": "prod",
     "level": "error",
     "message": "Error al procesar pago: tarjeta rechazada",
     "trace_id": "abc123",
@@ -626,14 +761,14 @@ curl -X POST https://logs.tuempresa.com/api/v1/logs \
   -d '[
     {
       "service": "payments_api",
-      "env": "production",
+      "env": "prod",
       "level": "info",
       "message": "Inicio de sesión de pago",
       "trace_id": "abc123"
     },
     {
       "service": "payments_api",
-      "env": "production",
+      "env": "prod",
       "level": "error",
       "message": "Timeout al conectar con proveedor",
       "trace_id": "abc123"
@@ -679,9 +814,9 @@ ninguno es válido, la respuesta es `400 validation_error`.
 | Campo | Obligatorio | Descripción |
 |---|---|---|
 | `service` | Sí | Identificador del servicio emisor |
-| `env` | Sí | Entorno (`production`, `staging`, `development`, `test`) |
+| `env` | Sí | Entorno (`prod`, `staging`, `dev`, `test` u otros de `ALLOWED_ENVS`) |
 | `level` | Sí | Nivel de log (ver sección [Niveles](#niveles-de-log)) |
-| `message` | Sí | Mensaje legible (máx. 4096 chars por defecto) |
+| `message` | Sí | Mensaje legible (máx. 8000 chars por defecto, configurable con `LOG_MESSAGE_MAX_CHARS`) |
 | `_timestamp` | No | ISO-8601 o entero en microsegundos. Si falta, se usa la hora de recepción |
 | `trace_id` | No | ID de traza distribuida |
 | `span_id` | No | ID de span (OpenTelemetry) |
@@ -730,15 +865,15 @@ curl -X POST https://logs.tuempresa.com/api/v1/logs/batch \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <tu-token>" \
   -d '[
-    { "service": "web_shop", "env": "production", "level": "info", "message": "Evento A" },
-    { "service": "web_shop", "env": "production", "level": "warn", "message": "Evento B" }
+    { "service": "web_shop", "env": "prod", "level": "info", "message": "Evento A" },
+    { "service": "web_shop", "env": "prod", "level": "warn", "message": "Evento B" }
   ]'
 ```
 
 #### 🗜️ Con compresión gzip
 
 ```bash
-echo '[{"service":"web_shop","env":"production","level":"info","message":"Evento A"}]' \
+echo '[{"service":"web_shop","env":"prod","level":"info","message":"Evento A"}]' \
   | gzip \
   | curl -X POST https://logs.tuempresa.com/api/v1/logs/batch \
     -H "Content-Type: application/json" \
@@ -814,7 +949,7 @@ curl "https://logs.tuempresa.com/api/v1/logs?service=payments_api\
     {
       "_timestamp": "2026-06-01T15:32:11.000Z",
       "service": "payments_api",
-      "env": "production",
+      "env": "prod",
       "level": "error",
       "message": "Error al procesar pago: tarjeta rechazada",
       "trace_id": "abc123",
@@ -875,14 +1010,15 @@ curl https://logs.tuempresa.com/api/v1/services \
 ```json
 {
   "services": ["payments_api", "auth_service"],
-  "envs": ["production", "staging"],
+  "envs": ["prod", "staging"],
   "scopes": ["write", "read"],
   "limits": {
     "max_query_window": null,
     "max_limit": 1000,
     "allow_q": true,
     "response_profile": "full"
-  }
+  },
+  "request_id": "b7e2c9a1-4f3d-4b8e-a1c2-d3e4f5a6b7c8"
 }
 ```
 
@@ -891,14 +1027,15 @@ curl https://logs.tuempresa.com/api/v1/services \
 ```json
 {
   "services": ["web_shop"],
-  "envs": ["production"],
+  "envs": ["prod"],
   "scopes": ["read"],
   "limits": {
     "max_query_window": "7d",
     "max_limit": 500,
     "allow_q": false,
     "response_profile": "frontend_reduced"
-  }
+  },
+  "request_id": "c1d2e3f4-5a6b-7c8d-9e0f-a1b2c3d4e5f6"
 }
 ```
 
@@ -1016,19 +1153,24 @@ acepta:
 ### 🗂️ Normalización de `context`
 
 El objeto `context` se aplana por puntos hasta `CONTEXT_MAX_DEPTH` niveles de
-profundidad. Si un objeto `context` es demasiado profundo o tiene demasiados campos,
-se recorta y el evento se marca con `context_truncated: true`. El evento sigue
-aceptándose.
+profundidad antes de almacenarse en OpenObserve. Si un objeto `context` es demasiado
+profundo o tiene demasiados campos, se recorta y el evento se marca con
+`context_truncated: true`. El evento sigue aceptándose.
 
-Ejemplo de aplanamiento:
+Ejemplo de aplanamiento (almacenamiento interno):
 
 ```json
 // Enviado:
 { "context": { "user": { "id": 42, "role": "admin" } } }
 
-// Almacenado:
+// Almacenado internamente:
 { "context.user.id": 42, "context.user.role": "admin" }
 ```
+
+> 📌 **Consultas (`GET /api/v1/logs`)**: el gateway **reconstruye** el objeto `context`
+> como objeto anidado antes de devolver la respuesta. Los consumidores de la API de
+> consulta siempre reciben `context` como objeto JSON anidado, no como claves planas con
+> puntos.
 
 ### 🧩 Campos raíz desconocidos
 
@@ -1106,8 +1248,11 @@ Superar `QUEUE_MAX_ITEMS` (cola llena) devuelve `429 rate_limited`.
 
 ### 📝 Content-Type requerido
 
-Todos los endpoints de ingesta y consulta requieren `Content-Type: application/json`.
-Un Content-Type no soportado devuelve `415 unsupported_media_type`.
+Los endpoints de ingesta (`POST /api/v1/logs` y `POST /api/v1/logs/batch`) requieren
+`Content-Type: application/json`. Un Content-Type no soportado devuelve
+`415 unsupported_media_type`.
+
+`GET /api/v1/logs` no tiene body JSON, por lo que **no requiere** `Content-Type`.
 
 ---
 
@@ -1138,7 +1283,7 @@ Las API keys tienen un tipo de cliente que determina sus capacidades y restricci
 - Respuesta reducida: solo devuelven campos esenciales (`_timestamp`, `level`,
   `message`, `service`, `env`, `request_id`, `trace_id`) y un `context` sin
   campos sensibles conocidos.
-- No pueden acceder al stream `log_gateway` (logs internos del propio gateway).
+- No pueden acceder al stream `log_gateway` bajo ninguna circunstancia.
 
 #### ⚖️ Comparativa
 
@@ -1150,7 +1295,7 @@ Las API keys tienen un tipo de cliente que determina sus capacidades y restricci
 | `limit` máximo | 1000 | 500 |
 | Ventana temporal máxima | Ilimitada | 7 días |
 | Respuesta | Completa | Reducida (sin campos sensibles) |
-| Acceso a `log_gateway` stream | No | No |
+| Acceso a `log_gateway` stream | Solo si `services` incluye `log_gateway` explícitamente (key de plataforma) | No (siempre) |
 | `services: ["*"]` en producción | No | No |
 
 ---
@@ -1176,7 +1321,7 @@ const logger = new BackendLogClient({
 // Enviar un log
 logger.log({
   service: 'payments_api',
-  env:     'production',
+  env:     'prod',
   level:   'info',
   message: 'Pago procesado',
   trace_id: 'abc-123',
@@ -1246,7 +1391,7 @@ const logger = new FrontendLogClient({
 // Enviar un log de error de UI
 logger.log({
   service: 'web_shop',
-  env:     'production',
+  env:     'prod',
   level:   'error',
   message: 'Error al renderizar el carrito',
   source:  'frontend',
@@ -1351,7 +1496,7 @@ Esta es la estructura completa de un evento de log tal como se envía al gateway
 interface LogEventInput {
   // ── Obligatorios ──────────────────────────────────────────────────────────
   service:  string;     // Patrón: ^[a-z0-9_]{3,64}$
-  env:      string;     // 'production' | 'staging' | 'development' | 'test' | ...
+  env:      string;     // 'prod' | 'staging' | 'dev' | 'test' | ... (ALLOWED_ENVS)
   level:    string;     // 'trace'|'debug'|'info'|'warn'|'error'|'fatal' (o equivalencias)
   message:  string;     // Mín. 1 char, máx. LOG_MESSAGE_MAX_CHARS
 
@@ -1396,7 +1541,7 @@ interface LogEventInput {
 ### 🏷️ Cabeceras comunes
 
 ```http
-Content-Type:  application/json  (obligatoria en ingesta y consulta)
+Content-Type:  application/json  (obligatoria solo en POST /logs y POST /logs/batch)
 Authorization: Bearer <key_id>.<secret>  (obligatoria en todos los endpoints con Auth)
 ```
 
@@ -1480,8 +1625,8 @@ de error y los parámetros habituales precargados.
 
 ### 🖥️ Swagger UI interactivo (disponible en todo momento)
 
-El gateway genera y sirve automáticamente la especificación OpenAPI 3.0 al arrancar.
-Accede a la interfaz interactivo en:
+El gateway genera y sirve automáticamente la especificación **OpenAPI 3.0** al arrancar
+(formato generado por `@nestjs/swagger`). Accede a la interfaz interactiva en:
 
 ```text
 http://localhost:3366/api/docs          ← en desarrollo local
@@ -1547,16 +1692,18 @@ npx @redocly/cli preview-docs openapi.yaml
 
 ### 📜 Fichero de especificación manual (fuente normativa)
 
-Además de la spec generada automáticamente, existe un fichero OpenAPI 3.1.0 mantenido
-manualmente como contrato normativo del proyecto:
+Además de la spec generada automáticamente (3.0), existe un fichero **OpenAPI 3.1.0**
+mantenido manualmente como contrato normativo del proyecto (contract-first):
 
 ```text
 specs/001-log-gateway-api/contracts/openapi.yaml
 ```
 
-Este fichero es la **fuente de verdad del diseño** (contract-first). La spec generada
-automáticamente refleja el código implementado; el fichero manual refleja el diseño
-acordado. Si difieren, hay una discrepancia que el equipo debe resolver.
+Este fichero es la **fuente de verdad del diseño** (contract-first) y usa sintaxis
+OpenAPI 3.1 (p. ej. `type: [string, "null"]` para nullability). La spec generada
+automáticamente refleja el código implementado en 3.0; el fichero manual refleja el
+diseño acordado en 3.1. Si difieren en comportamiento, hay una discrepancia que el
+equipo debe resolver.
 
 ### 📦 Versiones instaladas
 
@@ -1601,9 +1748,9 @@ Los valores recomendados por defecto son:
 
 | Entorno | Retención recomendada |
 |---|---|
-| `production` | 90 días |
+| `prod` | 90 días |
 | `staging` | 30 días |
-| `development` | 30 días |
+| `dev` | 30 días |
 | `test` | 7 días |
 
 Consulta al equipo de plataforma para confirmar los valores actuales.
@@ -1624,7 +1771,7 @@ No. El único método de autenticación es la cabecera `Authorization: Bearer
 
 Sí. El propio gateway escribe sus logs internos en el stream `log_gateway` de
 OpenObserve. Estos logs no incluyen secretos, payloads de cliente ni cabeceras
-`Authorization`. Solo el equipo de plataforma tiene acceso a ese stream.
+`Authorization`. Solo el equipo de plataforma tiene acceso a ese stream, mediante una key backend configurada explícitamente con `services: ["log_gateway"]` o `services: ["*"]` (solo fuera de producción).
 
 ### ✂️ ¿Qué significa `range_truncated: true` en la respuesta de consulta?
 
