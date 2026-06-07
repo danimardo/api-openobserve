@@ -17,6 +17,9 @@ coverage/
 .env.*
 !.env.example
 
+# API keys de producción (nunca versionar)
+secrets/
+
 # Sistema operativo / editor
 Thumbs.db
 .DS_Store

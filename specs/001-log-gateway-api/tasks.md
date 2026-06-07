@@ -28,12 +28,12 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 **Purpose**: Inicialización del proyecto y herramientas de calidad.
 
-- [ ] T001 Crear estructura de carpetas del proyecto según `plan.md` (src/controllers, src/application/services, src/domain/{schemas,normalization,redaction,authorization,limits,query,errors}, src/infrastructure/{openobserve,config,queue,metrics,logging}, src/common/{guards,interceptors,filters,pipes,middleware}, test/{unit,integration,e2e}, scripts/, docs/snippets/{backend,frontend}, postman/)
-- [ ] T002 Inicializar `package.json` con las dependencias EXACTAS de la tabla constitucional (NestJS 11.1.24, @nestjs/config 4.0.4, @nestjs/axios 4.0.1, axios 1.17.0, @nestjs/throttler 6.5.0, zod 4.4.3, pino 10.3.1, nestjs-pino 4.6.1, prom-client 15.1.3, helmet 8.2.0, uuid 14.0.0, reflect-metadata 0.2.2, rxjs 7.8.2; dev: jest 30.4.2, @swc/core 1.15.40, @swc/jest 0.2.39, @nestjs/testing 11.1.24, supertest 7.2.2, eslint 10.4.1, typescript-eslint 8.60.1, prettier 3.8.3, typescript 6.0.3, @types/node 24.13.1, @types/jest 30.0.0) y scripts (`start:dev`, `build`, `test`, `test:e2e`, `lint`, `format:check`, `keygen`); fijar `package-lock.json` con `npm install`
-- [ ] T003 [P] Configurar `tsconfig.json` con `strict`, `noImplicitAny`, `strictNullChecks`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` (constitución, TypeScript and code style)
-- [ ] T004 [P] Configurar ESLint (`eslint.config.*`) + `typescript-eslint` con regla que bloquea `console.*` en código de aplicación, y Prettier (`.prettierrc`) + `format:check`
-- [ ] T005 [P] Configurar Jest con `@swc/jest` para unit/integración y configuración e2e separada, con umbrales de cobertura (85% global statements/branches; 90% statements en `src/domain/{authorization,normalization,redaction,query,limits}`)
-- [ ] T006 [P] Crear `.env.example` con todas las variables (`PORT`, `NODE_ENV`, `O2_URL`, `O2_ORG`, `O2_AUTH_USER`, `O2_AUTH_PASSWORD`, `API_KEYS_JSON`, `API_KEYS_FILE`, `ALLOWED_ENVS`, `INGEST_MAX_BATCH`, `INGEST_MAX_BODY_MB`, `LOG_MESSAGE_MAX_CHARS`, `CONTEXT_MAX_DEPTH`, `CONTEXT_VALUE_MAX_CHARS`, `MAX_FIELDS_PER_RECORD`, `QUEUE_MAX_ITEMS`, `RETRY_ATTEMPTS`, `RETRY_BACKOFF_MS`, `DELIVERY_BATCH_MAX`, `DELIVERY_FLUSH_MS`, `RATE_LIMIT_RPS`, `CORS_ALLOWED_ORIGINS`, `LOG_LEVEL`, `METRICS_ENABLED`) con valores ficticios y sin secretos
+- [X] T001 Crear estructura de carpetas del proyecto según `plan.md` (src/controllers, src/application/services, src/domain/{schemas,normalization,redaction,authorization,limits,query,errors}, src/infrastructure/{openobserve,config,queue,metrics,logging}, src/common/{guards,interceptors,filters,pipes,middleware}, test/{unit,integration,e2e}, scripts/, docs/snippets/{backend,frontend}, postman/)
+- [X] T002 Inicializar `package.json` con las dependencias EXACTAS de la tabla constitucional (NestJS 11.1.24, @nestjs/config 4.0.4, @nestjs/axios 4.0.1, axios 1.17.0, @nestjs/throttler 6.5.0, zod 4.4.3, pino 10.3.1, nestjs-pino 4.6.1, prom-client 15.1.3, helmet 8.2.0, uuid 14.0.0, reflect-metadata 0.2.2, rxjs 7.8.2; dev: jest 30.4.2, @swc/core 1.15.40, @swc/jest 0.2.39, @nestjs/testing 11.1.24, supertest 7.2.2, eslint 10.4.1, typescript-eslint 8.60.1, prettier 3.8.3, typescript 6.0.3, @types/node 24.13.1, @types/jest 30.0.0) y scripts (`start:dev`, `build`, `test`, `test:e2e`, `lint`, `format:check`, `keygen`); fijar `package-lock.json` con `npm install`
+- [X] T003 [P] Configurar `tsconfig.json` con `strict`, `noImplicitAny`, `strictNullChecks`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` (constitución, TypeScript and code style)
+- [X] T004 [P] Configurar ESLint (`eslint.config.*`) + `typescript-eslint` con regla que bloquea `console.*` en código de aplicación, y Prettier (`.prettierrc`) + `format:check`
+- [X] T005 [P] Configurar Jest con `@swc/jest` para unit/integración y configuración e2e separada, con umbrales de cobertura (85% global statements/branches; 90% statements en `src/domain/{authorization,normalization,redaction,query,limits}`)
+- [X] T006 [P] Crear `.env.example` con todas las variables (`PORT`, `NODE_ENV`, `O2_URL`, `O2_ORG`, `O2_AUTH_USER`, `O2_AUTH_PASSWORD`, `API_KEYS_JSON`, `API_KEYS_FILE`, `ALLOWED_ENVS`, `INGEST_MAX_BATCH`, `INGEST_MAX_BODY_MB`, `LOG_MESSAGE_MAX_CHARS`, `CONTEXT_MAX_DEPTH`, `CONTEXT_VALUE_MAX_CHARS`, `MAX_FIELDS_PER_RECORD`, `QUEUE_MAX_ITEMS`, `RETRY_ATTEMPTS`, `RETRY_BACKOFF_MS`, `DELIVERY_BATCH_MAX`, `DELIVERY_FLUSH_MS`, `RATE_LIMIT_RPS`, `CORS_ALLOWED_ORIGINS`, `LOG_LEVEL`, `METRICS_ENABLED`) con valores ficticios y sin secretos
 
 ---
 
@@ -41,22 +41,22 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 **Purpose**: Infraestructura núcleo compartida por TODAS las historias. **⚠️ Ninguna historia puede empezar hasta completar esta fase.**
 
-- [ ] T007 [P] Definir esquemas Zod base y tipos inferidos (`z.infer`) en `src/domain/schemas/` (`log-event.schema.ts` entrada/normalizado, `query.schema.ts`, `api-key.schema.ts`, `error.schema.ts`) según `data-model.md`
-- [ ] T008 [P] Definir tipos/códigos de error de dominio en `src/domain/errors/` (mapa `code`→HTTP de `data-model.md` §6)
-- [ ] T009 Implementar módulo de configuración en `src/infrastructure/config/` como única frontera de `process.env`: schema Zod de entorno con parseo de números/booleanos/listas/JSON, defaults (FR-038) y **fail-fast** en bootstrap (FR-037)
-- [ ] T010 Implementar carga y validación de API keys en `src/infrastructure/config/api-keys.ts`: parseo desde `API_KEYS_JSON`/`API_KEYS_FILE`, validación Zod, rechazo de `services:["*"]` en producción (FR-023) y de keys frontend que autoricen streams backend o `log_gateway` (FR-024); config inmutable
-- [ ] T011 [P] Implementar wrapper de logging `AppLogger` en `src/infrastructure/logging/` sobre Pino 10 + `nestjs-pino`: contexto estructurado (`request_id`, `service`, `env`, `module`, `operation`), redacción en emisión, salida a stdout/stderr (principio IX); inyectable/falso para tests
-- [ ] T012 [P] Implementar registro de métricas Prometheus en `src/infrastructure/metrics/` con prom-client: las métricas mínimas de FR-029 (counters, gauge `queue_depth`, histogram `request_duration_seconds`)
-- [ ] T013 [P] Implementar `ZodValidationPipe` en `src/common/pipes/` que convierte body/query/headers crudos en tipos internos y emite `400 validation_error` (principio VIII)
-- [ ] T014 [P] Implementar interceptor de `request_id` en `src/common/interceptors/` (conserva el del cliente solo tras validarlo; si falta/ inválido lo genera) y filtro global de error en `src/common/filters/` con formato `{ error:{code,message,details}, request_id }` (FR-035)
-- [ ] T015 [P] Implementar interceptor de duración en `src/common/interceptors/` que alimenta `log_gateway_request_duration_seconds`
-- [ ] T016 Implementar cliente base OpenObserve en `src/infrastructure/openobserve/`: axios con HTTP Basic (`O2_AUTH_USER`/`O2_AUTH_PASSWORD`), organización `O2_ORG`, validación Zod de respuestas (principio VIII, D5)
-- [ ] T017 Implementar `ApiKeyAuthGuard` en `src/common/guards/`: parseo de `Authorization: Bearer <key_id>.<secret>`, separación por el primer `.`, lookup por `key_id`, comparación `sha256(secret)` vs `secret_hash` con `crypto.timingSafeEqual` → `401` en fallo (FR-020, FR-025)
-- [ ] T018 Implementar servicio de autorización en `src/domain/authorization/`: reglas de `scopes` (`read`/`write`) y `services`, política frontend (`client_type`, `read_policy`) — lógica pura (FR-021, FR-022)
-- [ ] T019 Configurar `@nestjs/throttler` con tracker por `key_id` (no IP) y límite `RATE_LIMIT_RPS` en `src/common/` (cableado; comportamiento `429` se prueba en US10) (FR-030)
-- [ ] T020 Implementar `src/main.ts` y `src/app.module.ts`: bootstrap NestJS con helmet, pipes/filters/interceptors globales, puerto 3000 y fail-fast de configuración
-- [ ] T021 [P] Test unitario de carga/validación de config y API keys en `test/unit/config.spec.ts` (incluye `["*"]` prod inválido y restricción frontend) (FR-023, FR-024, FR-037)
-- [ ] T022 [P] Test unitario del `AppLogger` (redacción y contexto, sin secretos) en `test/unit/logging.spec.ts` (principio IX)
+- [X] T007 [P] Definir esquemas Zod base y tipos inferidos (`z.infer`) en `src/domain/schemas/` (`log-event.schema.ts` entrada/normalizado, `query.schema.ts`, `api-key.schema.ts`, `error.schema.ts`) según `data-model.md`
+- [X] T008 [P] Definir tipos/códigos de error de dominio en `src/domain/errors/` (mapa `code`→HTTP de `data-model.md` §6)
+- [X] T009 Implementar módulo de configuración en `src/infrastructure/config/` como única frontera de `process.env`: schema Zod de entorno con parseo de números/booleanos/listas/JSON, defaults (FR-038) y **fail-fast** en bootstrap (FR-037)
+- [X] T010 Implementar carga y validación de API keys en `src/infrastructure/config/api-keys.ts`: parseo desde `API_KEYS_JSON`/`API_KEYS_FILE`, validación Zod, rechazo de `services:["*"]` en producción (FR-023) y de keys frontend que autoricen streams backend o `log_gateway` (FR-024); config inmutable
+- [X] T011 [P] Implementar wrapper de logging `AppLogger` en `src/infrastructure/logging/` sobre Pino 10 + `nestjs-pino`: contexto estructurado (`request_id`, `service`, `env`, `module`, `operation`), redacción en emisión, salida a stdout/stderr (principio IX); inyectable/falso para tests
+- [X] T012 [P] Implementar registro de métricas Prometheus en `src/infrastructure/metrics/` con prom-client: las métricas mínimas de FR-029 (counters, gauge `queue_depth`, histogram `request_duration_seconds`)
+- [X] T013 [P] Implementar `ZodValidationPipe` en `src/common/pipes/` que convierte body/query/headers crudos en tipos internos y emite `400 validation_error` (principio VIII)
+- [X] T014 [P] Implementar interceptor de `request_id` en `src/common/interceptors/` (conserva el del cliente solo tras validarlo; si falta/ inválido lo genera) y filtro global de error en `src/common/filters/` con formato `{ error:{code,message,details}, request_id }` (FR-035)
+- [X] T015 [P] Implementar interceptor de duración en `src/common/interceptors/` que alimenta `log_gateway_request_duration_seconds`
+- [X] T016 Implementar cliente base OpenObserve en `src/infrastructure/openobserve/`: axios con HTTP Basic (`O2_AUTH_USER`/`O2_AUTH_PASSWORD`), organización `O2_ORG`, validación Zod de respuestas (principio VIII, D5)
+- [X] T017 Implementar `ApiKeyAuthGuard` en `src/common/guards/`: parseo de `Authorization: Bearer <key_id>.<secret>`, separación por el primer `.`, lookup por `key_id`, comparación `sha256(secret)` vs `secret_hash` con `crypto.timingSafeEqual` → `401` en fallo (FR-020, FR-025)
+- [X] T018 Implementar servicio de autorización en `src/domain/authorization/`: reglas de `scopes` (`read`/`write`) y `services`, política frontend (`client_type`, `read_policy`) — lógica pura (FR-021, FR-022)
+- [X] T019 Configurar `@nestjs/throttler` con tracker por `key_id` (no IP) y límite `RATE_LIMIT_RPS` en `src/common/` (cableado; comportamiento `429` se prueba en US10) (FR-030)
+- [X] T020 Implementar `src/main.ts` y `src/app.module.ts`: bootstrap NestJS con helmet, pipes/filters/interceptors globales, puerto 3000 y fail-fast de configuración
+- [X] T021 [P] Test unitario de carga/validación de config y API keys en `test/unit/config.spec.ts` (incluye `["*"]` prod inválido y restricción frontend) (FR-023, FR-024, FR-037)
+- [X] T022 [P] Test unitario del `AppLogger` (redacción y contexto, sin secretos) en `test/unit/logging.spec.ts` (principio IX)
 
 **Checkpoint**: Fundación lista — las historias pueden comenzar.
 
@@ -70,21 +70,21 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 1 ⚠️ (escribir primero, deben fallar)
 
-- [ ] T023 [P] [US1] Test de integración HTTP de `POST /api/v1/logs` (objeto y array, `202`, conteos) en `test/integration/ingest.spec.ts` (FR-001, FR-003)
-- [ ] T024 [P] [US1] Test unitario de normalización de `_timestamp` (relleno por recepción, ISO-8601↔µs) en `test/unit/normalization-timestamp.spec.ts` (FR-006)
-- [ ] T025 [P] [US1] Test unitario del worker de entrega por lotes (agrupación por stream, flush por tamaño/intervalo, reintentos) en `test/unit/queue-worker.spec.ts` (FR-007)
-- [ ] T026 [US1] Test E2E ingesta → aparición en stream OpenObserve en `test/e2e/ingest.e2e-spec.ts` (CA1, CA8)
+- [X] T023 [P] [US1] Test de integración HTTP de `POST /api/v1/logs` (objeto y array, `202`, conteos) en `test/integration/ingest.spec.ts` (FR-001, FR-003)
+- [X] T024 [P] [US1] Test unitario de normalización de `_timestamp` (relleno por recepción, ISO-8601↔µs) en `test/unit/normalization-timestamp.spec.ts` (FR-006)
+- [X] T025 [P] [US1] Test unitario del worker de entrega por lotes (agrupación por stream, flush por tamaño/intervalo, reintentos) en `test/unit/queue-worker.spec.ts` (FR-007)
+- [X] T026 [US1] Test E2E ingesta → aparición en stream OpenObserve en `test/e2e/ingest.e2e-spec.ts` (CA1, CA8)
 
 ### Implementation for User Story 1
 
-- [ ] T027 [P] [US1] Implementar normalización núcleo en `src/domain/normalization/` (relleno/conversión de `_timestamp`, normalización de `level` con mapa de equivalencias e `invalid_level`) (FR-006, FR-011)
-- [ ] T028 [P] [US1] Implementar redacción de campos sensibles conocidos en `src/domain/redaction/` (`***redacted***` + métrica) (FR-014)
-- [ ] T029 [US1] Implementar cola en memoria acotada en `src/infrastructure/queue/queue.ts` (`QUEUE_MAX_ITEMS`, gauge `queue_depth`) (FR-007, FR-008)
-- [ ] T030 [US1] Implementar worker de entrega en `src/infrastructure/queue/delivery.worker.ts`: agrupar por stream, flush por `DELIVERY_BATCH_MAX`/`DELIVERY_FLUSH_MS`, reintentos/backoff por lote, métricas de fallo/reintento (FR-007, clarificación)
-- [ ] T031 [US1] Implementar path de ingesta en cliente O2 `src/infrastructure/openobserve/ingest.ts` usando `_json`/`_multi`, agrupando por `service`/stream (FR-005)
-- [ ] T032 [US1] Implementar `IngestService` en `src/application/services/ingest.service.ts`: validar→normalizar→redactar→encolar y construir respuesta de conteos (FR-003)
-- [ ] T033 [US1] Implementar `IngestController` `POST /api/v1/logs` en `src/controllers/ingest.controller.ts` (acepta objeto o array; guard `write`) (FR-001)
-- [ ] T034 [US1] Registrar logs operativos de ingesta (conteos/metadatos, sin payloads) vía `AppLogger` (principio IX, FR-034)
+- [X] T027 [P] [US1] Implementar normalización núcleo en `src/domain/normalization/` (relleno/conversión de `_timestamp`, normalización de `level` con mapa de equivalencias e `invalid_level`) (FR-006, FR-011)
+- [X] T028 [P] [US1] Implementar redacción de campos sensibles conocidos en `src/domain/redaction/` (`***redacted***` + métrica) (FR-014)
+- [X] T029 [US1] Implementar cola en memoria acotada en `src/infrastructure/queue/queue.ts` (`QUEUE_MAX_ITEMS`, gauge `queue_depth`) (FR-007, FR-008)
+- [X] T030 [US1] Implementar worker de entrega en `src/infrastructure/queue/delivery.worker.ts`: agrupar por stream, flush por `DELIVERY_BATCH_MAX`/`DELIVERY_FLUSH_MS`, reintentos/backoff por lote, métricas de fallo/reintento (FR-007, clarificación)
+- [X] T031 [US1] Implementar path de ingesta en cliente O2 `src/infrastructure/openobserve/ingest.ts` usando `_json`/`_multi`, agrupando por `service`/stream (FR-005)
+- [X] T032 [US1] Implementar `IngestService` en `src/application/services/ingest.service.ts`: validar→normalizar→redactar→encolar y construir respuesta de conteos (FR-003)
+- [X] T033 [US1] Implementar `IngestController` `POST /api/v1/logs` en `src/controllers/ingest.controller.ts` (acepta objeto o array; guard `write`) (FR-001)
+- [X] T034 [US1] Registrar logs operativos de ingesta (conteos/metadatos, sin payloads) vía `AppLogger` (principio IX, FR-034)
 
 **Checkpoint**: US1 funcional e independientemente testeable (MVP).
 
@@ -98,18 +98,18 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T035 [P] [US2] Test de integración HTTP de `GET /api/v1/logs` (filtros, `200`, `next_cursor`, falta `service`→`400`) en `test/integration/query.spec.ts` (FR-015)
-- [ ] T036 [P] [US2] Test unitario de no inyección SQL (fuzzing de `q`/`trace_id`/`request_id`) en `test/unit/sql-builder.spec.ts` (FR-016, CA11)
-- [ ] T037 [P] [US2] Test unitario de codificación/decodificación estable del cursor opaco en `test/unit/cursor.spec.ts` (FR-017)
-- [ ] T038 [US2] Test E2E de paginación estable contra OpenObserve en `test/e2e/query.e2e-spec.ts` (CA9, CA10)
+- [X] T035 [P] [US2] Test de integración HTTP de `GET /api/v1/logs` (filtros, `200`, `next_cursor`, falta `service`→`400`) en `test/integration/query.spec.ts` (FR-015)
+- [X] T036 [P] [US2] Test unitario de no inyección SQL (fuzzing de `q`/`trace_id`/`request_id`) en `test/unit/sql-builder.spec.ts` (FR-016, CA11)
+- [X] T037 [P] [US2] Test unitario de codificación/decodificación estable del cursor opaco en `test/unit/cursor.spec.ts` (FR-017)
+- [X] T038 [US2] Test E2E de paginación estable contra OpenObserve en `test/e2e/query.e2e-spec.ts` (CA9, CA10)
 
 ### Implementation for User Story 2
 
-- [ ] T039 [P] [US2] Implementar constructor SQL seguro en `src/domain/query/sql-builder.ts` (allowlist `service`/`level`/`env`/`sort`, escape de `q`/`trace_id`/`request_id`, acotado de `limit`) (FR-016)
-- [ ] T040 [P] [US2] Implementar cursor opaco en `src/domain/query/cursor.ts` (codifica posición estable según `sort`) (FR-017)
-- [ ] T041 [US2] Implementar path de búsqueda en cliente O2 `src/infrastructure/openobserve/search.ts` (`_search`), con `502 openobserve_error` ante fallo (FR-019)
-- [ ] T042 [US2] Implementar `QueryService` en `src/application/services/query.service.ts` (filtros, defaults, `items`/`next_cursor`/`request_id`, sin `total` por defecto) (FR-015, FR-017)
-- [ ] T043 [US2] Implementar `QueryController` `GET /api/v1/logs` en `src/controllers/query.controller.ts` (guard `read`; `service` obligatorio → `400`) (FR-015)
+- [X] T039 [P] [US2] Implementar constructor SQL seguro en `src/domain/query/sql-builder.ts` (allowlist `service`/`level`/`env`/`sort`, escape de `q`/`trace_id`/`request_id`, acotado de `limit`) (FR-016)
+- [X] T040 [P] [US2] Implementar cursor opaco en `src/domain/query/cursor.ts` (codifica posición estable según `sort`) (FR-017)
+- [X] T041 [US2] Implementar path de búsqueda en cliente O2 `src/infrastructure/openobserve/search.ts` (`_search`), con `502 openobserve_error` ante fallo (FR-019)
+- [X] T042 [US2] Implementar `QueryService` en `src/application/services/query.service.ts` (filtros, defaults, `items`/`next_cursor`/`request_id`, sin `total` por defecto) (FR-015, FR-017)
+- [X] T043 [US2] Implementar `QueryController` `GET /api/v1/logs` en `src/controllers/query.controller.ts` (guard `read`; `service` obligatorio → `400`) (FR-015)
 
 **Checkpoint**: US1 y US2 funcionan independientemente.
 
@@ -123,13 +123,13 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T044 [P] [US3] Test unitario de autorización (scope/service, `["*"]` solo lectura) en `test/unit/authorization.spec.ts` (FR-022, FR-023)
-- [ ] T045 [P] [US3] Test de integración negativo: `401` key inválida, `403` falta de scope, rechazo por registro de `service` no autorizado en ingesta, `403` en consulta no autorizada, en `test/integration/authz.spec.ts` (CA5, CA6, CA7)
+- [X] T044 [P] [US3] Test unitario de autorización (scope/service, `["*"]` solo lectura) en `test/unit/authorization.spec.ts` (FR-022, FR-023)
+- [X] T045 [P] [US3] Test de integración negativo: `401` key inválida, `403` falta de scope, rechazo por registro de `service` no autorizado en ingesta, `403` en consulta no autorizada, en `test/integration/authz.spec.ts` (CA5, CA6, CA7)
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Integrar autorización en `IngestService` (rechazo por registro de `service` no autorizado, FR-021) y en `QueryController`/`QueryService` (`403` por falta de scope o acceso a `service`, FR-021)
-- [ ] T047 [US3] Aplicar validación de arranque que impide `services:["*"]` en producción y `["*"]` solo para lectura (refuerza T010) (FR-023)
+- [X] T046 [US3] Integrar autorización en `IngestService` (rechazo por registro de `service` no autorizado, FR-021) y en `QueryController`/`QueryService` (`403` por falta de scope o acceso a `service`, FR-021)
+- [X] T047 [US3] Aplicar validación de arranque que impide `services:["*"]` en producción y `["*"]` solo para lectura (refuerza T010) (FR-023)
 
 **Checkpoint**: P1 completo (ingesta + consulta + aislamiento).
 
@@ -143,14 +143,14 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 7 ⚠️
 
-- [ ] T048 [P] [US7] Test unitario de aplanado de `context`, `context.extra`, truncado y `context_truncated` en `test/unit/normalization-context.spec.ts` (FR-012, FR-013)
-- [ ] T049 [P] [US7] Test unitario de redacción de PII conocida y valores no serializables en `test/unit/redaction.spec.ts` (FR-014, FR-012)
+- [X] T048 [P] [US7] Test unitario de aplanado de `context`, `context.extra`, truncado y `context_truncated` en `test/unit/normalization-context.spec.ts` (FR-012, FR-013)
+- [X] T049 [P] [US7] Test unitario de redacción de PII conocida y valores no serializables en `test/unit/redaction.spec.ts` (FR-014, FR-012)
 
 ### Implementation for User Story 7
 
-- [ ] T050 [US7] Ampliar `src/domain/normalization/` con aplanado por puntos hasta `CONTEXT_MAX_DEPTH`, mover campos raíz no reconocidos a `context.extra`, eliminar/convertir no serializables y marcar `context_truncated` (FR-012, FR-013)
-- [ ] T051 [US7] Ampliar `src/domain/redaction/` con la lista completa de campos sensibles/PII conocida y emisión de `log_gateway_redacted_fields_total`/`log_gateway_context_truncated_total` (FR-014)
-- [ ] T052 [US7] Normalizar `source` al enum `backend|frontend` con `unknown` para valores fuera del enum en `src/domain/normalization/` (FR-010, clarificación)
+- [X] T050 [US7] Ampliar `src/domain/normalization/` con aplanado por puntos hasta `CONTEXT_MAX_DEPTH`, mover campos raíz no reconocidos a `context.extra`, eliminar/convertir no serializables y marcar `context_truncated` (FR-012, FR-013)
+- [X] T051 [US7] Ampliar `src/domain/redaction/` con la lista completa de campos sensibles/PII conocida y emisión de `log_gateway_redacted_fields_total`/`log_gateway_context_truncated_total` (FR-014)
+- [X] T052 [US7] Normalizar `source` al enum `backend|frontend` con `unknown` para valores fuera del enum en `src/domain/normalization/` (FR-010, clarificación)
 
 **Checkpoint**: Calidad de datos hacia O2 garantizada.
 
@@ -164,13 +164,13 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T053 [P] [US6] Test de integración de `/logs/batch` (mixto, gzip, no-array→`400`, sin válidos→`400`) en `test/integration/batch.spec.ts` (FR-002, FR-003, FR-004)
+- [X] T053 [P] [US6] Test de integración de `/logs/batch` (mixto, gzip, no-array→`400`, sin válidos→`400`) en `test/integration/batch.spec.ts` (FR-002, FR-003, FR-004)
 
 ### Implementation for User Story 6
 
-- [ ] T054 [US6] Implementar middleware de descompresión gzip y medición de tamaño comprimido+descomprimido en `src/common/middleware/` (FR-031)
-- [ ] T055 [US6] Implementar endpoint `POST /api/v1/logs/batch` en `src/controllers/ingest.controller.ts` (array obligatorio, `Content-Encoding: gzip`) (FR-002)
-- [ ] T056 [US6] Implementar aceptación parcial con `errors[]` por índice en `IngestService` (`202`; sin válidos→`400` con `details`) (FR-003, FR-004)
+- [X] T054 [US6] Implementar middleware de descompresión gzip y medición de tamaño comprimido+descomprimido en `src/common/middleware/` (FR-031)
+- [X] T055 [US6] Implementar endpoint `POST /api/v1/logs/batch` en `src/controllers/ingest.controller.ts` (array obligatorio, `Content-Encoding: gzip`) (FR-002)
+- [X] T056 [US6] Implementar aceptación parcial con `errors[]` por índice en `IngestService` (`202`; sin válidos→`400` con `details`) (FR-003, FR-004)
 
 **Checkpoint**: Ingesta de alto volumen disponible.
 
@@ -184,12 +184,12 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T057 [P] [US5] Test de integración de restricciones frontend en `test/integration/frontend-read.spec.ts` (reducida, `q` prohibido, recortes, `403`) (FR-018, CA20)
+- [X] T057 [P] [US5] Test de integración de restricciones frontend en `test/integration/frontend-read.spec.ts` (reducida, `q` prohibido, recortes, `403`) (FR-018, CA20)
 
 ### Implementation for User Story 5
 
-- [ ] T058 [P] [US5] Implementar perfil de respuesta reducida `frontend_reduced` (allowlist de campos, eliminación de sensibles/conocidos en `context`) en `src/domain/query/response-profile.ts` (FR-018)
-- [ ] T059 [US5] Aplicar `read_policy` en `QueryService`: prohibición de `q`, recorte de ventana >7d (`range_truncated`), recorte de `limit` >500 (`limit_truncated`), restricción a `service`/`env` autorizados (FR-018)
+- [X] T058 [P] [US5] Implementar perfil de respuesta reducida `frontend_reduced` (allowlist de campos, eliminación de sensibles/conocidos en `context`) en `src/domain/query/response-profile.ts` (FR-018)
+- [X] T059 [US5] Aplicar `read_policy` en `QueryService`: prohibición de `q`, recorte de ventana >7d (`range_truncated`), recorte de `limit` >500 (`limit_truncated`), restricción a `service`/`env` autorizados (FR-018)
 
 **Checkpoint**: Lectura frontend segura.
 
@@ -203,15 +203,15 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 10 ⚠️
 
-- [ ] T060 [P] [US10] Test unitario de límites en `src/domain/limits/` en `test/unit/limits.spec.ts` (longitud `message`, campos, longitud valores context) (FR-031)
-- [ ] T061 [P] [US10] Test de integración de `429` (rate limit y cola llena), `413` (body/batch), `415` (content-type) en `test/integration/limits.spec.ts` (FR-030, FR-031, FR-032, CA12)
+- [X] T060 [P] [US10] Test unitario de límites en `src/domain/limits/` en `test/unit/limits.spec.ts` (longitud `message`, campos, longitud valores context) (FR-031)
+- [X] T061 [P] [US10] Test de integración de `429` (rate limit y cola llena), `413` (body/batch), `415` (content-type) en `test/integration/limits.spec.ts` (FR-030, FR-031, FR-032, CA12)
 
 ### Implementation for User Story 10
 
-- [ ] T062 [P] [US10] Implementar reglas de límites puras en `src/domain/limits/` (`LOG_MESSAGE_MAX_CHARS`, `MAX_FIELDS_PER_RECORD`, `CONTEXT_VALUE_MAX_CHARS`, `INGEST_MAX_BATCH`) (FR-031)
-- [ ] T063 [US10] Aplicar límites en ingesta (`413 payload_too_large` por body/lote; rechazo de `message` largo) y `415` por content-type no soportado (FR-031, FR-032)
-- [ ] T064 [US10] Verificar `429 rate_limited` por throttler (T019) y por cola llena (`QUEUE_MAX_ITEMS`), con incremento de `log_gateway_rate_limited_total` (FR-008, FR-030)
-- [ ] T065 [US10] Implementar CORS restringido por `allowed_origins` de la key y `CORS_ALLOWED_ORIGINS` en `src/common/middleware/` (FR-033)
+- [X] T062 [P] [US10] Implementar reglas de límites puras en `src/domain/limits/` (`LOG_MESSAGE_MAX_CHARS`, `MAX_FIELDS_PER_RECORD`, `CONTEXT_VALUE_MAX_CHARS`, `INGEST_MAX_BATCH`) (FR-031)
+- [X] T063 [US10] Aplicar límites en ingesta (`413 payload_too_large` por body/lote; rechazo de `message` largo) y `415` por content-type no soportado (FR-031, FR-032)
+- [X] T064 [US10] Verificar `429 rate_limited` por throttler (T019) y por cola llena (`QUEUE_MAX_ITEMS`), con incremento de `log_gateway_rate_limited_total` (FR-008, FR-030)
+- [X] T065 [US10] Implementar CORS restringido por `allowed_origins` de la key y `CORS_ALLOWED_ORIGINS` en `src/common/middleware/` (FR-033)
 
 **Checkpoint**: Protección de disponibilidad activa.
 
@@ -225,12 +225,12 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 9 ⚠️
 
-- [ ] T066 [P] [US9] Test de integración de `/health` (`200`) y `/health/ready` (`200`/`503`) en `test/integration/health.spec.ts` (FR-028, CA13)
+- [X] T066 [P] [US9] Test de integración de `/health` (`200`) y `/health/ready` (`200`/`503`) en `test/integration/health.spec.ts` (FR-028, CA13)
 
 ### Implementation for User Story 9
 
-- [ ] T067 [US9] Implementar `HealthService` en `src/application/services/health.service.ts` (readiness comprueba conectividad/credenciales O2) (FR-028)
-- [ ] T068 [US9] Implementar `HealthController` `GET /api/v1/health` y `GET /api/v1/health/ready` públicos (sin API key) en `src/controllers/health.controller.ts` (FR-028)
+- [X] T067 [US9] Implementar `HealthService` en `src/application/services/health.service.ts` (readiness comprueba conectividad/credenciales O2) (FR-028)
+- [X] T068 [US9] Implementar `HealthController` `GET /api/v1/health` y `GET /api/v1/health/ready` públicos (sin API key) en `src/controllers/health.controller.ts` (FR-028)
 
 **Checkpoint**: Operable por Coolify.
 
@@ -244,14 +244,14 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 11 ⚠️
 
-- [ ] T069 [P] [US11] Test de integración de `GET /api/v1/metrics` (formato Prometheus, métricas mínimas) en `test/integration/metrics.spec.ts` (FR-029, CA18)
-- [ ] T070 [P] [US11] Test unitario del sink a `log_gateway` sin reintento recursivo ante fallo en `test/unit/log-gateway-sink.spec.ts` (FR-034)
+- [X] T069 [P] [US11] Test de integración de `GET /api/v1/metrics` (formato Prometheus, métricas mínimas) en `test/integration/metrics.spec.ts` (FR-029, CA18)
+- [X] T070 [P] [US11] Test unitario del sink a `log_gateway` sin reintento recursivo ante fallo en `test/unit/log-gateway-sink.spec.ts` (FR-034)
 
 ### Implementation for User Story 11
 
-- [ ] T071 [US11] Implementar `MetricsController` `GET /api/v1/metrics` público en `src/controllers/metrics.controller.ts` y `MetricsService` que expone el registro (FR-029)
-- [ ] T072 [US11] Implementar sink de logs internos al stream `log_gateway` en `src/infrastructure/logging/` (stdout/stderr + O2, sin secretos/payloads, sin bucles recursivos) (FR-034)
-- [ ] T073 [US11] Cablear incrementos de contadores en los caminos críticos (accepted/rejected/o2 fallos/reintentos/rate_limited/redacted/truncated) (FR-029)
+- [X] T071 [US11] Implementar `MetricsController` `GET /api/v1/metrics` público en `src/controllers/metrics.controller.ts` y `MetricsService` que expone el registro (FR-029)
+- [X] T072 [US11] Implementar sink de logs internos al stream `log_gateway` en `src/infrastructure/logging/` (stdout/stderr + O2, sin secretos/payloads, sin bucles recursivos) (FR-034)
+- [X] T073 [US11] Cablear incrementos de contadores en los caminos críticos (accepted/rejected/o2 fallos/reintentos/rate_limited/redacted/truncated) (FR-029)
 
 **Checkpoint**: Gateway auto-observable.
 
@@ -265,12 +265,12 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 12 ⚠️
 
-- [ ] T074 [P] [US12] Test unitario de hashing SHA-256 y `timingSafeEqual` en `test/unit/key-hash.spec.ts` (FR-025)
-- [ ] T075 [P] [US12] Test unitario del generador `keygen` (entropía, formato `key_id`+secreto+hash) en `test/unit/keygen.spec.ts` (FR-026)
+- [X] T074 [P] [US12] Test unitario de hashing SHA-256 y `timingSafeEqual` en `test/unit/key-hash.spec.ts` (FR-025)
+- [X] T075 [P] [US12] Test unitario del generador `keygen` (entropía, formato `key_id`+secreto+hash) en `test/unit/keygen.spec.ts` (FR-026)
 
 ### Implementation for User Story 12
 
-- [ ] T076 [US12] Implementar `scripts/keygen.ts` (`npm run keygen`) que genera `key_id`, secreto de alta entropía y `secret_hash` SHA-256, con helper explícito de salida CLI (no `console.*` de aplicación) (FR-026, principio IX excepción)
+- [X] T076 [US12] Implementar `scripts/keygen.ts` (`npm run keygen`) que genera `key_id`, secreto de alta entropía y `secret_hash` SHA-256, con helper explícito de salida CLI (no `console.*` de aplicación) (FR-026, principio IX excepción)
 
 **Checkpoint**: Operación de keys lista.
 
@@ -284,12 +284,12 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 8 ⚠️
 
-- [ ] T077 [P] [US8] Test de integración de `GET /api/v1/services` (capacidades de la key; sin `secret_hash`; límites frontend) en `test/integration/services.spec.ts` (FR-027, CA19)
+- [X] T077 [P] [US8] Test de integración de `GET /api/v1/services` (capacidades de la key; sin `secret_hash`; límites frontend) en `test/integration/services.spec.ts` (FR-027, CA19)
 
 ### Implementation for User Story 8
 
-- [ ] T078 [US8] Implementar `ListServicesService` en `src/application/services/list-services.service.ts` (servicios/entornos/scopes/límites de la key actual) (FR-027)
-- [ ] T079 [US8] Implementar `ServicesController` `GET /api/v1/services` en `src/controllers/services.controller.ts` (FR-027)
+- [X] T078 [US8] Implementar `ListServicesService` en `src/application/services/list-services.service.ts` (servicios/entornos/scopes/límites de la key actual) (FR-027)
+- [X] T079 [US8] Implementar `ServicesController` `GET /api/v1/services` en `src/controllers/services.controller.ts` (FR-027)
 
 **Checkpoint**: Descubrimiento disponible.
 
@@ -303,12 +303,12 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T080 [P] [US4] Test del snippet backend simulando error/timeout (no propaga, aplica buffer/flush) en `test/unit/snippet-backend.spec.ts` (US4 AC1, AC3)
+- [X] T080 [P] [US4] Test del snippet backend simulando error/timeout (no propaga, aplica buffer/flush) en `test/unit/snippet-backend.spec.ts` (US4 AC1, AC3)
 
 ### Implementation for User Story 4
 
-- [ ] T081 [P] [US4] Crear snippet backend de referencia en `docs/snippets/backend/` (buffer, flush periódico, timeout, captura de errores, envío a `/logs/batch`) (D24, US4)
-- [ ] T082 [P] [US4] Crear snippet frontend de referencia en `docs/snippets/frontend/` (`fetch` con `keepalive` + `Authorization`, `loglevel`, fallo silencioso) (D26, US4)
+- [X] T081 [P] [US4] Crear snippet backend de referencia en `docs/snippets/backend/` (buffer, flush periódico, timeout, captura de errores, envío a `/logs/batch`) (D24, US4)
+- [X] T082 [P] [US4] Crear snippet frontend de referencia en `docs/snippets/frontend/` (`fetch` con `keepalive` + `Authorization`, `loglevel`, fallo silencioso) (D26, US4)
 
 **Checkpoint**: Integración cliente documentada.
 
@@ -322,13 +322,13 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 ### Tests for User Story 13 ⚠️
 
-- [ ] T083 [US13] Verificación de build de imagen y arranque con healthcheck en `test/e2e/deploy.e2e-spec.ts` (o script documentado) (CA17)
+- [X] T083 [US13] Verificación de build de imagen y arranque con healthcheck en `test/e2e/deploy.e2e-spec.ts` (o script documentado) (CA17)
 
 ### Implementation for User Story 13
 
-- [ ] T084 [P] [US13] Crear `Dockerfile` multi-stage (build con devDeps → runtime `node:24.16.0-bookworm-slim`, usuario no root, solo deps de producción, puerto 3000, healthcheck `/api/v1/health/ready`) (FR-039)
-- [ ] T085 [P] [US13] Crear `postman/log-gateway.postman_collection.json` (schema 2.1.0) con todos los endpoints (FR-039, D25)
-- [ ] T086 [US13] Redactar `README.md` (variables, ejecución local, despliegue Coolify, ejemplo `scrape_config` Prometheus, sin secretos) (FR-039)
+- [X] T084 [P] [US13] Crear `Dockerfile` multi-stage (build con devDeps → runtime `node:24.16.0-bookworm-slim`, usuario no root, solo deps de producción, puerto 3000, healthcheck `/api/v1/health/ready`) (FR-039)
+- [X] T085 [P] [US13] Crear `postman/log-gateway.postman_collection.json` (schema 2.1.0) con todos los endpoints (FR-039, D25)
+- [X] T086 [US13] Redactar `README.md` (variables, ejecución local, despliegue Coolify, ejemplo `scrape_config` Prometheus, sin secretos) (FR-039)
 
 **Checkpoint**: Desplegable de forma reproducible.
 
@@ -338,11 +338,11 @@ Proyecto único: `src/`, `test/`, `scripts/`, `docs/`, `postman/` en la raíz. C
 
 **Purpose**: Cierre transversal y verificación final.
 
-- [ ] T087 [P] Revisar manejo de edge cases transversales (JSON malformado, multi-`service`, duplicados por reintento, request_id reenviado) según sección Edge Cases del spec
-- [ ] T088 [P] Completar tests negativos exigidos por la constitución (credenciales inválidas, permisos insuficientes, payloads grandes, restricciones frontend, config prohibida en producción) (principio VII)
-- [ ] T089 Verificar cobertura ≥85% global y ≥90% en dominio y que el 100% de CA1–CA22 están cubiertos (SC-002, CA22)
-- [ ] T090 Ejecutar la validación de `quickstart.md` (V1–V18) de extremo a extremo
-- [ ] T091 Ejecutar quality gates completos: `npm ci`, `npm run lint`, `npm run format:check`, `npm run test`, `npm run test:e2e`, `npm run build` (principio VII)
+- [X] T087 [P] Revisar manejo de edge cases transversales (JSON malformado, multi-`service`, duplicados por reintento, request_id reenviado) según sección Edge Cases del spec
+- [X] T088 [P] Completar tests negativos exigidos por la constitución (credenciales inválidas, permisos insuficientes, payloads grandes, restricciones frontend, config prohibida en producción) (principio VII)
+- [X] T089 Verificar cobertura ≥85% global y ≥90% en dominio y que el 100% de CA1–CA22 están cubiertos (SC-002, CA22)
+- [X] T090 Ejecutar la validación de `quickstart.md` (V1–V18) de extremo a extremo
+- [X] T091 Ejecutar quality gates completos: `npm ci`, `npm run lint`, `npm run format:check`, `npm run test`, `npm run test:e2e`, `npm run build` (principio VII)
 
 ---
 

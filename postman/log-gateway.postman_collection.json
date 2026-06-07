@@ -1,0 +1,223 @@
+{
+  "info": {
+    "_postman_id": "log-gateway-api-v1",
+    "name": "Log Gateway API",
+    "description": "Colección de endpoints de la Log Gateway API. Configura las variables de entorno `baseUrl` y `apiKey` antes de ejecutar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "key-<id>.<secret>",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /api/v1/health — liveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            },
+            "description": "Liveness check. Siempre devuelve 200 si el proceso está activo. No requiere autenticación (FR-028)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/health/ready — readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health", "ready"]
+            },
+            "description": "Readiness check. Devuelve 200 si OpenObserve es accesible, 503 si no (FR-028)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "GET /api/v1/metrics — Prometheus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "metrics"]
+            },
+            "description": "Métricas en formato Prometheus text. No requiere autenticación (FR-029)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "GET /api/v1/services — capacidades de la key",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services"]
+            },
+            "description": "Devuelve los servicios, scopes, tipo de cliente y read_policy asociados a la API key. Nunca incluye secret_hash (FR-027)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Ingest",
+      "item": [
+        {
+          "name": "POST /api/v1/logs — evento único",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service\": \"payments_api\",\n  \"env\": \"production\",\n  \"level\": \"info\",\n  \"message\": \"Payment processed\",\n  \"amount\": 9.99,\n  \"request_id\": \"req-abc123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"]
+            },
+            "description": "Ingesta un único registro de log. Acepta también un array de registros. Devuelve 202 si entra en cola (FR-001)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/v1/logs/batch — lote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"service\": \"payments_api\",\n    \"env\": \"production\",\n    \"level\": \"info\",\n    \"message\": \"Batch event 1\"\n  },\n  {\n    \"service\": \"payments_api\",\n    \"env\": \"production\",\n    \"level\": \"warn\",\n    \"message\": \"Batch event 2\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs/batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs", "batch"]
+            },
+            "description": "Ingesta un lote de registros (MUST ser array). Devuelve 202 con accepted/rejected parciales. 413 si supera INGEST_MAX_BATCH (FR-006)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Query",
+      "item": [
+        {
+          "name": "GET /api/v1/logs — búsqueda básica",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=payments_api&env=production&level=error&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "payments_api" },
+                { "key": "env", "value": "production" },
+                { "key": "level", "value": "error" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Consulta logs por servicio, entorno y nivel. Parámetros opcionales: from, to, limit, q (solo backend). La key debe tener scope 'read' (FR-009)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/logs — con ventana de tiempo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=payments_api&env=production&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "payments_api" },
+                { "key": "env", "value": "production" },
+                { "key": "from", "value": "2025-01-01T00:00:00Z" },
+                { "key": "to", "value": "2025-01-02T00:00:00Z" },
+                { "key": "limit", "value": "100" }
+              ]
+            },
+            "description": "Consulta con ventana de tiempo explícita. Frontend keys: máximo 7 días hacia atrás, límite 500 (FR-009, FR-018)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
