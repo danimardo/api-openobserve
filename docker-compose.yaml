@@ -1,0 +1,184 @@
+# docker-compose.yaml — Log Gateway API
+#
+# Diseñado para despliegue con proxy inverso externo (Coolify u otro).
+# El servicio expone el puerto en la LAN para que el proxy lo alcance.
+#
+# ── Uso rápido ──────────────────────────────────────────────────────────────
+#
+#   1. Copia el fichero de API keys al directorio secrets/:
+#        mkdir secrets
+#        cp tu-api-keys.json secrets/api-keys.json
+#
+#   2. Crea un fichero .env con las variables obligatorias (ver abajo).
+#
+#   3. Arranca:
+#        docker compose up -d
+#
+#   4. Verifica que el servicio está listo:
+#        curl http://localhost:4750/api/v1/health/ready
+#
+# ── Variables de entorno ─────────────────────────────────────────────────────
+#
+#   Copia .env.example a .env y completa los valores reales.
+#   En Coolify puedes configurarlas en la interfaz web sin fichero .env.
+#
+#   OBLIGATORIAS:
+#     O2_URL            URL de tu instancia OpenObserve (ej: http://openobserve:5080)
+#     O2_ORG            Nombre de la organización en OpenObserve (ej: default)
+#     O2_AUTH_USER      Usuario de servicio dedicado en OpenObserve
+#     O2_AUTH_PASSWORD  Contraseña de ese usuario (nunca el usuario admin)
+#
+#   API KEYS (elige uno de los dos métodos):
+#     Método A — fichero montado (recomendado para producción):
+#       API_KEYS_FILE=/run/secrets/api-keys.json
+#       + montar el fichero en ./secrets/api-keys.json (ver volumes abajo)
+#
+#     Método B — JSON inline (válido para desarrollo o setups pequeños):
+#       API_KEYS_JSON=[{"id":"key-001","secret_hash":"...","services":["mi_app"],...}]
+#       (comenta el volume y la variable API_KEYS_FILE si usas este método)
+#
+#   CORS:
+#     CORS_ALLOWED_ORIGINS  — orígenes de tus FRONTENDS web separados por coma.
+#                             Añade aquí los dominios de tus apps que corren en
+#                             el navegador y llaman al gateway.
+#                             Ejemplo: https://miapp.tuempresa.com,https://admin.tuempresa.com
+#                             NO añadas la URL del propio gateway.
+#                             Si solo acceden servicios backend, déjalo vacío.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  log-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: log-gateway:latest
+    container_name: log-gateway
+
+    # ── Puerto expuesto en la LAN ──────────────────────────────────────────
+    # El proxy inverso (Nginx, Traefik, Caddy, etc.) debe apuntar a este puerto.
+    # Puerto 4750 elegido por ser poco común y evitar conflictos con otros servicios.
+    ports:
+      - "4750:4750"
+
+    environment:
+      # ── Servidor ──────────────────────────────────────────────────────────
+      NODE_ENV: production
+      PORT: "4750"
+
+      # ── OpenObserve (obligatorias) ────────────────────────────────────────
+      O2_URL:           ${O2_URL}
+      O2_ORG:           ${O2_ORG}
+      O2_AUTH_USER:     ${O2_AUTH_USER}
+      O2_AUTH_PASSWORD: ${O2_AUTH_PASSWORD}
+
+      # ── API Keys: método A — fichero montado (recomendado) ────────────────
+      # Descomenta API_KEYS_JSON y comenta esta línea si usas el método B.
+      API_KEYS_FILE: /run/secrets/api-keys.json
+
+      # ── API Keys: método B — JSON inline (alternativa) ────────────────────
+      # API_KEYS_JSON: ${API_KEYS_JSON}
+
+      # ── Entornos permitidos ───────────────────────────────────────────────
+      ALLOWED_ENVS: ${ALLOWED_ENVS:-production,staging,development,test}
+
+      # ── Límites de ingesta ────────────────────────────────────────────────
+      INGEST_MAX_BATCH:       ${INGEST_MAX_BATCH:-1000}
+      INGEST_MAX_BODY_MB:     ${INGEST_MAX_BODY_MB:-5}
+      LOG_MESSAGE_MAX_CHARS:  ${LOG_MESSAGE_MAX_CHARS:-8000}
+      MAX_FIELDS_PER_RECORD:  ${MAX_FIELDS_PER_RECORD:-200}
+      CONTEXT_MAX_DEPTH:      ${CONTEXT_MAX_DEPTH:-2}
+      CONTEXT_VALUE_MAX_CHARS: ${CONTEXT_VALUE_MAX_CHARS:-2000}
+
+      # ── Cola y entrega a OpenObserve ──────────────────────────────────────
+      QUEUE_MAX_ITEMS:    ${QUEUE_MAX_ITEMS:-10000}
+      RETRY_ATTEMPTS:     ${RETRY_ATTEMPTS:-3}
+      RETRY_BACKOFF_MS:   ${RETRY_BACKOFF_MS:-200}
+      DELIVERY_BATCH_MAX: ${DELIVERY_BATCH_MAX:-500}
+      DELIVERY_FLUSH_MS:  ${DELIVERY_FLUSH_MS:-1000}
+
+      # ── Rate limiting ─────────────────────────────────────────────────────
+      RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-100}
+
+      # ── CORS ──────────────────────────────────────────────────────────────
+      # Orígenes de tus frontends web (apps en el navegador). Ej:
+      #   https://miapp.tuempresa.com,https://admin.tuempresa.com
+      # Deja vacío si solo acceden servicios backend.
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+
+      # ── Observabilidad ────────────────────────────────────────────────────
+      LOG_LEVEL:        ${LOG_LEVEL:-info}
+      METRICS_ENABLED:  ${METRICS_ENABLED:-true}
+
+    # ── Fichero de API keys (método A) ────────────────────────────────────────
+    # Monta el fichero de keys como solo lectura.
+    # Crea el directorio secrets/ y coloca ahí tu api-keys.json antes de arrancar.
+    # Si usas el método B (API_KEYS_JSON), comenta este bloque completo.
+    volumes:
+      - ./secrets/api-keys.json:/run/secrets/api-keys.json:ro
+
+    # ── Healthcheck ───────────────────────────────────────────────────────────
+    # Comprueba que el gateway puede conectar con OpenObserve.
+    # El proxy inverso / Coolify puede usar este estado para el routing.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >
+          fetch('http://localhost:4750/api/v1/health/ready')
+            .then(r => r.ok ? process.exit(0) : process.exit(1))
+            .catch(() => process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    # ── Política de reinicio ──────────────────────────────────────────────────
+    restart: unless-stopped
+
+    # ── Logs del contenedor ───────────────────────────────────────────────────
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ── Notas de despliegue con proxy inverso externo ─────────────────────────────
+#
+#  El proxy inverso (Nginx, Caddy, Traefik en otro compose, etc.) debe:
+#
+#    1. Escuchar en el dominio público (ej: apiopenobs.mardomingo.com).
+#    2. Terminar TLS (certificado SSL).
+#    3. Hacer proxy_pass a http://<IP-del-servidor-LAN>:4750
+#
+#  Ejemplo de bloque Nginx:
+#
+#    server {
+#        listen 443 ssl;
+#        server_name apiopenobs.mardomingo.com;
+#
+#        ssl_certificate     /etc/ssl/certs/apiopenobs.crt;
+#        ssl_certificate_key /etc/ssl/private/apiopenobs.key;
+#
+#        location / {
+#            proxy_pass         http://192.168.1.50:4750;
+#            proxy_set_header   Host              $host;
+#            proxy_set_header   X-Real-IP         $remote_addr;
+#            proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+#            proxy_set_header   X-Forwarded-Proto $scheme;
+#        }
+#    }
+#
+#  Ejemplo de bloque Caddyfile:
+#
+#    apiopenobs.mardomingo.com {
+#        reverse_proxy 192.168.1.50:4750
+#    }
+#
+#  En Coolify con proxy externo:
+#    - Desactiva el proxy integrado de Coolify para esta aplicación.
+#    - Expón el puerto en la LAN (ya configurado arriba).
+#    - Apunta tu proxy externo a http://<IP-servidor>:4750.
+#
+# ─────────────────────────────────────────────────────────────────────────────

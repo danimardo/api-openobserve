@@ -1,0 +1,19 @@
+# Normalizar finales de línea: el repositorio almacena LF.
+# Conveniente para build/despliegue en Linux/Docker (Node 24, Coolify) y scripts bash.
+* text=auto eol=lf
+
+# Scripts nativos de Windows: conservar CRLF en el árbol de trabajo.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Scripts shell: siempre LF (requerido para ejecutarse en Linux).
+*.sh text eol=lf
+
+# Ficheros binarios: sin normalización de finales de línea.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

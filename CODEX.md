@@ -1,10 +1,3 @@
-<!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan:
-`specs/001-log-gateway-api/plan.md` (with `research.md`, `data-model.md`,
-`contracts/openapi.yaml` and `quickstart.md` in the same folder).
-<!-- SPECKIT END -->
-
 <!-- MANUAL ADDITIONS START -->
 
 ## Project Agent Instructions
@@ -47,19 +40,6 @@ shell commands, and other important information, read the current plan:
 - Asegúrate de que la implementación cumple `constitution.md`, `spec.md` y la sintaxis moderna recomendada por la documentación vigente.
 - Para commits, pull requests y operaciones con GitHub, puedes usar la aplicación `gh` instalada en el sistema cuando sea apropiado.
 
-### Manual de integración para desarrolladores
-
-- El manual de integración para consumidores del API se encuentra en `docs/manual-de-integracion.md`.
-- **Actualiza el manual** cuando implementes o modifiques cualquier comportamiento observable por los consumidores:
-  - Nuevos endpoints o eliminación de existentes.
-  - Cambios en campos del `LogEvent`, parámetros de consulta o estructura de respuesta.
-  - Cambios en los valores por defecto de límites (`INGEST_MAX_BATCH`, `RATE_LIMIT_RPS`, etc.).
-  - Nuevos tipos de API key, scopes o políticas (frontend/backend).
-  - Cambios en la lógica de normalización o redacción que afecten a lo que llega a OpenObserve.
-  - Cambios en el formato de errores o en los códigos de error.
-- No es necesario actualizar el manual por cambios puramente internos (refactors, renombrado de variables, reorganización de módulos) que no alteren el comportamiento observable.
-- La fuente normativa sigue siendo `spec.md`; el manual es su traducción didáctica. Si ambos difieren, corrige el manual para que refleje `spec.md`.
-
 ### Logging y diagnóstico
 
 - El proyecto usa una arquitectura de logging estructurado.
@@ -70,7 +50,7 @@ shell commands, and other important information, read the current plan:
 
 #### INSTRUCCIÓN CRÍTICA PARA EL AGENTE DE IA: lectura proactiva de logs
 
-**Antes de pedir información adicional al usuario o de especular sobre un error, SIEMPRE lee los ficheros de log.** El agente tiene acceso directo a estos ficheros mediante la herramienta `Read`. El usuario nunca debe necesitar copiar ni pegar fragmentos de log para ayudar al diagnóstico.
+**Antes de pedir información adicional al usuario o de especular sobre un error, SIEMPRE lee los ficheros de log.** El agente tiene acceso directo a estos ficheros mediante herramientas de lectura de ficheros. El usuario nunca debe necesitar copiar ni pegar fragmentos de log para ayudar al diagnóstico.
 
 Escenarios en los que debes leer los logs **sin esperar a que el usuario te lo pida**:
 

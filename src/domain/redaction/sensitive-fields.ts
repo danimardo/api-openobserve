@@ -1,0 +1,33 @@
+// FR-014: campos sensibles conocidos y PII a enmascarar antes de enviar a OpenObserve
+export const SENSITIVE_FIELDS = new Set([
+  'password',
+  'passwd',
+  'secret',
+  'token',
+  'api_key',
+  'apikey',
+  'authorization',
+  'auth',
+  'cookie',
+  'cookies',
+  'set_cookie',
+  'session',
+  'private_key',
+  'privatekey',
+  'access_token',
+  'refresh_token',
+  'secret_hash',
+  'credit_card',
+  'card_number',
+  'cvv',
+  'iban',
+  'email',
+  'phone',
+  'telephone',
+  'dni',
+  'nif',
+  'full_name',
+  'address',
+]);
+
+export const REDACTED = '***redacted***';
