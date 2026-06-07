@@ -11,6 +11,23 @@ type TransportTarget = { target: string; options?: Record<string, unknown>; leve
 function buildForwarderTarget(cfg: AppConfigService, level: string): TransportTarget | null {
   const { OO_FORWARDER_URL, OO_FORWARDER_KEY, OO_FORWARDER_SERVICE, NODE_ENV } = cfg.env;
   if (!OO_FORWARDER_URL || !OO_FORWARDER_KEY || !OO_FORWARDER_SERVICE) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(OO_FORWARDER_URL);
+  } catch {
+    throw new Error(`OO_FORWARDER_URL no es una URL válida: "${OO_FORWARDER_URL}"`);
+  }
+
+  const loopback = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+  const urlPort = Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80);
+  if (loopback.has(parsed.hostname) && urlPort === cfg.env.PORT) {
+    throw new Error(
+      `OO_FORWARDER_URL apunta al propio servidor (${parsed.hostname}:${urlPort}). ` +
+      `Esto causaría un bucle infinito de logs. Configura OO_FORWARDER_URL con la URL de una instancia externa.`,
+    );
+  }
+
   return {
     target: path.join(__dirname, 'openobserve.transport'),
     options: {
@@ -62,7 +79,11 @@ function buildTransport(cfg: AppConfigService, level: string): { targets: Transp
             paths: ['req.headers.authorization', 'req.headers.cookie', 'req.headers["x-api-key"]'],
             censor: '***redacted***',
           },
-          autoLogging: { ignore: (req: { url?: string }) => req.url === '/api/v1/health' },
+          autoLogging: {
+            ignore: (req: { url?: string }) =>
+              req.url === '/api/v1/health' ||
+              (req.url?.startsWith('/api/v1/logs') ?? false),
+          },
         },
       }),
     }),
