@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { LoggerModule } from 'nestjs-pino';
-import pino from 'pino';
+import { LoggerModule, Logger as PinoLogger } from 'nestjs-pino';
 import { AppConfigModule } from '../config/config.module';
 import { AppConfigService } from '../config/app-config.service';
 import { AppLogger, PINO_INSTANCE } from './app-logger';
@@ -42,14 +41,11 @@ function buildDevTransport(level: string) {
   providers: [
     {
       provide: PINO_INSTANCE,
-      inject: [AppConfigService],
-      useFactory: (cfg: AppConfigService) =>
-        pino({
-          level: cfg.env.LOG_LEVEL,
-          ...(cfg.env.NODE_ENV !== 'production'
-            ? { transport: buildDevTransport(cfg.env.LOG_LEVEL) }
-            : {}),
-        }),
+      inject: [PinoLogger],
+      // Reutiliza la instancia pino que ya gestiona LoggerModule para evitar
+      // tener dos transportes de fichero abiertos sobre los mismos ficheros.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      useFactory: (pinoLogger: PinoLogger) => (pinoLogger as any).logger,
     },
     AppLogger,
     { provide: APP_LOGGER, useExisting: AppLogger },

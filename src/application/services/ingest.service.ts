@@ -120,6 +120,12 @@ export class IngestService {
           message: `Not authorized to write to service "${event.service}"`,
         });
         this.metrics.eventsRejectedTotal.inc({ reason: 'forbidden' });
+        this.logger.warn('Ingest event rejected: forbidden service', {
+          module: 'IngestService',
+          key_id: apiKey.id,
+          service: event.service,
+          request_id: requestId,
+        });
         continue;
       }
 
@@ -189,6 +195,12 @@ export class IngestService {
     }
 
     if (accepted.length === 0) {
+      this.logger.warn('Batch fully rejected', {
+        module: 'IngestService',
+        request_id: requestId,
+        rejected: errors.length,
+        errors,
+      });
       throw new DomainError('validation_error', 'No valid events in batch', errors);
     }
 

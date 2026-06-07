@@ -45,8 +45,24 @@ function Liberar-Puerto {
     foreach ($pid_ in $pidsActuales) {
       $proc   = Get-Process -Id $pid_ -ErrorAction SilentlyContinue
       $nombre = if ($proc) { $proc.ProcessName } else { 'desconocido' }
-      Write-Host "  Matando '$nombre' (PID $pid_)..."
-      Stop-Process -Id $pid_ -Force -ErrorAction SilentlyContinue
+
+      # Buscar el PID padre via WMI para matar también el watcher de nest.
+      # Sin esto, el watcher (proceso node padre) respawnea el hijo inmediatamente
+      # y reclama el puerto antes de que SWC termine de compilar la nueva instancia.
+      $cimProc   = Get-CimInstance Win32_Process -Filter "ProcessId = $pid_" -ErrorAction SilentlyContinue
+      $parentPid = if ($cimProc) { [int]$cimProc.ParentProcessId } else { 0 }
+      $parentCim = if ($parentPid -gt 4) {
+        Get-CimInstance Win32_Process -Filter "ProcessId = $parentPid" -ErrorAction SilentlyContinue
+      } else { $null }
+
+      if ($parentCim -and $parentCim.Name -eq 'node.exe') {
+        # El padre es el nest watcher — matar el árbol completo desde el padre.
+        Write-Host "  Matando árbol de '$nombre' (PID $pid_, watcher $parentPid)..."
+        $null = & taskkill /F /T /PID $parentPid
+      } else {
+        Write-Host "  Matando '$nombre' (PID $pid_)..."
+        $null = & taskkill /F /T /PID $pid_
+      }
       $totalMatados++
     }
 
