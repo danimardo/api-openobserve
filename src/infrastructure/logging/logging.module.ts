@@ -6,6 +6,16 @@ import { AppConfigService } from '../config/app-config.service';
 import { AppLogger, PINO_INSTANCE } from './app-logger';
 import { APP_LOGGER } from './app-logger.interface';
 
+function buildDevTransport(level: string) {
+  return {
+    targets: [
+      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level },
+      { target: 'pino/file', options: { destination: '.logs/app.jsonl' }, level },
+      { target: 'pino-pretty', options: { colorize: false, singleLine: false, destination: '.logs/app.log' }, level },
+    ],
+  };
+}
+
 @Module({
   imports: [
     AppConfigModule,
@@ -18,9 +28,7 @@ import { APP_LOGGER } from './app-logger.interface';
         pinoHttp: {
           level: cfg.env.LOG_LEVEL,
           ...(cfg.env.NODE_ENV !== 'production'
-            ? {
-                transport: { target: 'pino-pretty', options: { colorize: true, singleLine: true } },
-              }
+            ? { transport: buildDevTransport(cfg.env.LOG_LEVEL) }
             : {}),
           redact: {
             paths: ['req.headers.authorization', 'req.headers.cookie', 'req.headers["x-api-key"]'],
@@ -39,9 +47,7 @@ import { APP_LOGGER } from './app-logger.interface';
         pino({
           level: cfg.env.LOG_LEVEL,
           ...(cfg.env.NODE_ENV !== 'production'
-            ? {
-                transport: { target: 'pino-pretty', options: { colorize: true, singleLine: true } },
-              }
+            ? { transport: buildDevTransport(cfg.env.LOG_LEVEL) }
             : {}),
         }),
     },

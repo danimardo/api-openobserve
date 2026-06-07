@@ -1,4 +1,6 @@
 import './common/types/request.types';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -6,7 +8,16 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AppConfigService } from './infrastructure/config/app-config.service';
 
+function initLogFiles(): void {
+  if (process.env.NODE_ENV === 'production') return;
+  const logsDir = join(process.cwd(), '.logs');
+  mkdirSync(logsDir, { recursive: true });
+  writeFileSync(join(logsDir, 'app.jsonl'), '');
+  writeFileSync(join(logsDir, 'app.log'), '');
+}
+
 async function bootstrap(): Promise<void> {
+  initLogFiles();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));

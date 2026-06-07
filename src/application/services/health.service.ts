@@ -16,17 +16,11 @@ export class HealthService {
 
   async readiness(): Promise<HealthStatus> {
     try {
-      // Verificar conectividad con OpenObserve mediante una llamada leve
-      await this.o2Client.http.get('/_cluster/health');
+      // GET /api/{org}/streams — endpoint estándar de OpenObserve, requiere auth válida
+      await this.o2Client.http.get('streams');
       return { status: 'ok', openobserve: 'reachable' };
     } catch {
-      try {
-        // Fallback: intentar listar streams como comprobación alternativa
-        await this.o2Client.http.get('/streams');
-        return { status: 'ok', openobserve: 'reachable' };
-      } catch {
-        return { status: 'error', openobserve: 'unreachable' };
-      }
+      return { status: 'error', openobserve: 'unreachable' };
     }
   }
 }

@@ -64,11 +64,28 @@ shell commands, and other important information, read the current plan:
 
 - El proyecto usa una arquitectura de logging estructurado.
 - Durante desarrollo local, el servidor escribe logs en:
-  - `F:\Apps\api-openobserve\.logs\app.log`: logs legibles por humanos.
-  - `F:\Apps\api-openobserve\.logs\app.jsonl`: logs estructurados JSON Lines.
-- Estos ficheros se sobrescriben en cada arranque de desarrollo y están ignorados por Git.
-- Al diagnosticar problemas de arranque, errores runtime, flujos rotos, requests fallidos o comportamiento inesperado, revisa estos logs antes de especular.
-- Usa `app.log` para inspección rápida y `app.jsonl` para análisis estructurado.
+  - `F:\Apps\api-openobserve\.logs\app.log`: logs legibles por humanos (pino-pretty sin colores).
+  - `F:\Apps\api-openobserve\.logs\app.jsonl`: logs estructurados JSON Lines (raw pino).
+- Estos ficheros se **sobrescriben en cada arranque** de desarrollo y están ignorados por Git.
+
+#### INSTRUCCIÓN CRÍTICA PARA EL AGENTE DE IA: lectura proactiva de logs
+
+**Antes de pedir información adicional al usuario o de especular sobre un error, SIEMPRE lee los ficheros de log.** El agente tiene acceso directo a estos ficheros mediante la herramienta `Read`. El usuario nunca debe necesitar copiar ni pegar fragmentos de log para ayudar al diagnóstico.
+
+Escenarios en los que debes leer los logs **sin esperar a que el usuario te lo pida**:
+
+- El usuario dice "hay un error", "algo no funciona", "obtengo un mensaje inesperado" o similar.
+- Un endpoint devuelve una respuesta errónea o inesperada.
+- La aplicación no arranca o se detiene inesperadamente.
+- Un flujo de ingesta, cola o entrega falla.
+- Cualquier comportamiento que no puedas explicar solo con el código fuente.
+
+Procedimiento:
+1. Lee `app.log` (inspección rápida, human-readable).
+2. Si necesitas análisis estructurado o filtrar por campo, lee `app.jsonl` (cada línea es un objeto JSON).
+3. Correlaciona con el `request_id` o timestamp del evento descrito por el usuario.
+4. Solo si los logs no contienen información suficiente, pide al usuario información adicional y explica qué buscas.
+
 - El código de aplicación y features no debe usar llamadas directas a `console.*`; usa el wrapper compartido de logging.
 - Los logs deben redactar secretos, tokens, credenciales, cookies, cabeceras `Authorization` e identificadores de sesión. Aun así, nunca copies datos sensibles desde logs a respuestas, commits, documentación o código generado.
 - Al añadir funcionalidades, registra eventos operativos significativos mediante el contrato compartido de logging y asegúrate de que el nivel `debug` aporte valor diagnóstico real.
