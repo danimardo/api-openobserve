@@ -69,7 +69,24 @@ async function bootstrap(): Promise<void> {
   );
 
   const config = app.get(AppConfigService);
-  await app.listen(config.env.PORT);
+
+  // En Windows, el hot reload de nest start --watch puede dejar el puerto en
+  // TIME_WAIT brevemente. Reintentamos hasta 5 veces con 500 ms de espera.
+  const MAX_RETRIES = 5;
+  const RETRY_DELAY_MS = 500;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      await app.listen(config.env.PORT);
+      break;
+    } catch (err: unknown) {
+      const nodeErr = err as NodeJS.ErrnoException;
+      if (nodeErr.code === 'EADDRINUSE' && attempt < MAX_RETRIES) {
+        await new Promise<void>((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 bootstrap().catch((err: unknown) => {

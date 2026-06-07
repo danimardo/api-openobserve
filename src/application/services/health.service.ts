@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { OpenObserveClient } from '../../infrastructure/openobserve/openobserve-client';
+import axios from 'axios';
+import { AppConfigService } from '../../infrastructure/config/app-config.service';
 import { APP_LOGGER, type IAppLogger } from '../../infrastructure/logging/app-logger.interface';
 
 export interface HealthStatus {
@@ -10,7 +11,7 @@ export interface HealthStatus {
 @Injectable()
 export class HealthService {
   constructor(
-    private readonly o2Client: OpenObserveClient,
+    private readonly config: AppConfigService,
     @Inject(APP_LOGGER) private readonly logger: IAppLogger,
   ) {}
 
@@ -20,11 +21,16 @@ export class HealthService {
 
   async readiness(): Promise<HealthStatus> {
     try {
-      // GET /api/{org}/streams — endpoint estándar de OpenObserve, requiere auth válida
-      await this.o2Client.http.get('streams');
+      // GET {O2_URL}/healthz — endpoint estándar de OpenObserve que no requiere permisos
+      // de administrador. validateStatus < 500 considera cualquier respuesta HTTP como
+      // "alcanzable"; solo errores de red (timeout, ECONNREFUSED) son "inalcanzable".
+      await axios.get(`${this.config.env.O2_URL}/healthz`, {
+        timeout: 5_000,
+        validateStatus: (s) => s < 500,
+      });
       return { status: 'ok', openobserve: 'reachable' };
     } catch (err) {
-      const error = err as Error & { response?: { status?: number; data?: unknown } };
+      const error = err as Error & { response?: { status?: number } };
       this.logger.warn('OpenObserve readiness check failed', {
         module: 'HealthService',
         operation: 'readiness',
