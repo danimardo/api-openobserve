@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:3366",
       "type": "string"
     },
     {
@@ -113,7 +113,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"service\": \"payments_api\",\n  \"env\": \"production\",\n  \"level\": \"info\",\n  \"message\": \"Payment processed\",\n  \"amount\": 9.99,\n  \"request_id\": \"req-abc123\"\n}",
+              "raw": "{\n  \"service\": \"pruebas\",\n  \"env\": \"production\",\n  \"level\": \"info\",\n  \"message\": \"Payment processed\",\n  \"amount\": 9.99,\n  \"request_id\": \"req-abc123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -125,7 +125,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "logs"]
             },
-            "description": "Ingesta un único registro de log. Acepta también un array de registros. Devuelve 202 si entra en cola (FR-001)."
+            "description": "Ingesta un único registro de log. El campo `service` debe estar en la lista de servicios permitidos de la API key. Devuelve 202 si entra en cola (FR-001)."
           },
           "response": []
         },
@@ -145,7 +145,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "[\n  {\n    \"service\": \"payments_api\",\n    \"env\": \"production\",\n    \"level\": \"info\",\n    \"message\": \"Batch event 1\"\n  },\n  {\n    \"service\": \"payments_api\",\n    \"env\": \"production\",\n    \"level\": \"warn\",\n    \"message\": \"Batch event 2\"\n  }\n]",
+              "raw": "[\n  {\n    \"service\": \"pruebas\",\n    \"env\": \"production\",\n    \"level\": \"info\",\n    \"message\": \"Batch event 1\"\n  },\n  {\n    \"service\": \"pruebas\",\n    \"env\": \"production\",\n    \"level\": \"warn\",\n    \"message\": \"Batch event 2\"\n  }\n]",
               "options": {
                 "raw": {
                   "language": "json"
@@ -177,17 +177,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/logs?service=payments_api&env=production&level=error&limit=50",
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&env=production&level=info&limit=50",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "logs"],
               "query": [
-                { "key": "service", "value": "payments_api" },
+                { "key": "service", "value": "pruebas" },
                 { "key": "env", "value": "production" },
-                { "key": "level", "value": "error" },
+                { "key": "level", "value": "info" },
                 { "key": "limit", "value": "50" }
               ]
             },
-            "description": "Consulta logs por servicio, entorno y nivel. Parámetros opcionales: from, to, limit, q (solo backend). La key debe tener scope 'read' (FR-009)."
+            "description": "Consulta logs por servicio, entorno y nivel. La key debe tener scope 'read' y acceso al servicio indicado (FR-009)."
           },
           "response": []
         },
@@ -202,11 +202,11 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/logs?service=payments_api&env=production&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z&limit=100",
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&env=production&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z&limit=100",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "logs"],
               "query": [
-                { "key": "service", "value": "payments_api" },
+                { "key": "service", "value": "pruebas" },
                 { "key": "env", "value": "production" },
                 { "key": "from", "value": "2025-01-01T00:00:00Z" },
                 { "key": "to", "value": "2025-01-02T00:00:00Z" },
@@ -214,6 +214,126 @@
               ]
             },
             "description": "Consulta con ventana de tiempo explícita. Frontend keys: máximo 7 días hacia atrás, límite 500 (FR-009, FR-018)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/logs — orden ascendente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&sort=asc&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "pruebas" },
+                { "key": "sort", "value": "asc" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Consulta con ordenación ascendente por _timestamp. Por defecto es 'desc' (FR-009)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/logs — paginación con cursor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&limit=50&cursor=<next_cursor_del_resultado_anterior>",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "pruebas" },
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "<next_cursor_del_resultado_anterior>" }
+              ]
+            },
+            "description": "Paginación por cursor. Usa el valor `next_cursor` devuelto en la respuesta anterior. Si `next_cursor` es null, no hay más resultados (FR-013)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/logs — búsqueda de texto libre (solo backend)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&q=payment+processed&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "pruebas" },
+                { "key": "q", "value": "payment processed" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Búsqueda de texto libre sobre todos los campos indexados. Solo disponible para keys de tipo 'backend'; las frontend keys reciben 403 (FR-018)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/logs — por trace_id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&trace_id=abc123&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "pruebas" },
+                { "key": "trace_id", "value": "abc123" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Filtra logs de una traza distribuida completa por su trace_id (FR-009)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/v1/logs — por request_id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/logs?service=pruebas&request_id=req-abc123&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "logs"],
+              "query": [
+                { "key": "service", "value": "pruebas" },
+                { "key": "request_id", "value": "req-abc123" },
+                { "key": "limit", "value": "50" }
+              ]
+            },
+            "description": "Filtra todos los logs de una petición HTTP concreta por su request_id (FR-009)."
           },
           "response": []
         }
