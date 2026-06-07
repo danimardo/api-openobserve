@@ -213,7 +213,8 @@ es para observabilidad.
 ### 🔗 3.1. Obtener la URL del gateway
 
 El gateway está disponible en la URL que te proporcione el equipo de infraestructura.
-En local (desarrollo) es `http://localhost:3000`. En producción, una URL del tipo
+En local (desarrollo) es `http://localhost:3366` (puerto configurable mediante la
+variable de entorno `PORT`). En producción, una URL del tipo
 `https://logs.tuempresa.com`.
 
 ### ❤️ 3.2. Verificar que el servicio está activo
@@ -1483,7 +1484,7 @@ El gateway genera y sirve automáticamente la especificación OpenAPI 3.0 al arr
 Accede a la interfaz interactivo en:
 
 ```text
-http://localhost:3000/api/docs          ← en desarrollo local
+http://localhost:3366/api/docs          ← en desarrollo local
 https://logs.tuempresa.com/api/docs     ← en producción
 ```
 
@@ -1519,7 +1520,7 @@ al endpoint de la spec para que se sincronice automáticamente con cualquier cam
 
 1. Abre Postman → **Import**.
 2. Selecciona la pestaña **Link**.
-3. Pega la URL: `http://localhost:3000/api/docs-json` (o la URL de producción).
+3. Pega la URL: `http://localhost:3366/api/docs-json` (o la URL de producción).
 4. Haz clic en **Continue** → **Import**.
 
 Postman importa todos los endpoints y genera una colección con ejemplos.
@@ -1528,19 +1529,19 @@ Cuando la API cambie, vuelve a importar desde la misma URL para actualizarla.
 #### 📥 Importar en Insomnia
 
 1. Abre Insomnia → **Create** → **Import from URL**.
-2. Pega: `http://localhost:3000/api/docs-yaml`
+2. Pega: `http://localhost:3366/api/docs-yaml`
 3. Insomnia crea el workspace con todos los endpoints.
 
 #### 🎨 Renderizar con ReDoc (documentación estática legible)
 
 ```bash
-npx @redocly/cli preview-docs http://localhost:3000/api/docs-json
+npx @redocly/cli preview-docs http://localhost:3366/api/docs-json
 ```
 
 O descarga el YAML y renderiza offline:
 
 ```bash
-curl http://localhost:3000/api/docs-yaml -o openapi.yaml
+curl http://localhost:3366/api/docs-yaml -o openapi.yaml
 npx @redocly/cli preview-docs openapi.yaml
 ```
 

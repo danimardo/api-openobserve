@@ -40,6 +40,24 @@
 - Asegúrate de que la implementación cumple `constitution.md`, `spec.md` y la sintaxis moderna recomendada por la documentación vigente.
 - Para commits, pull requests y operaciones con GitHub, puedes usar la aplicación `gh` instalada en el sistema cuando sea apropiado.
 
+### Manual de integración y contratos de la API
+
+Los siguientes ficheros documentan el comportamiento observable de la API y deben mantenerse siempre sincronizados con el código:
+
+- **Manual de integración**: `docs/manual-de-integracion.md` — explicación didáctica para consumidores de la API.
+- **Contrato OpenAPI**: `specs/001-log-gateway-api/contracts/openapi.yaml` — especificación normativa contract-first.
+- **Colección Postman**: `postman/log-gateway.postman_collection.json` — ejemplos de peticiones para pruebas manuales.
+
+**Actualiza los tres ficheros anteriores** cuando implementes o modifiques cualquier comportamiento observable por los consumidores:
+  - Nuevos endpoints o eliminación de existentes.
+  - Cambios en campos del `LogEvent`, parámetros de consulta o estructura de respuesta.
+  - Cambios en los valores por defecto de límites (`INGEST_MAX_BATCH`, `RATE_LIMIT_RPS`, etc.).
+  - Nuevos tipos de API key, scopes o políticas (frontend/backend).
+  - Cambios en la lógica de normalización o redacción que afecten a lo que llega a OpenObserve.
+  - Cambios en el formato de errores o en los códigos de error.
+- No es necesario actualizar estos ficheros por cambios puramente internos (refactors, renombrado de variables, reorganización de módulos) que no alteren el comportamiento observable.
+- La fuente normativa es `spec.md`; el manual y el contrato OpenAPI son su traducción. Si alguno de los tres difiere de `spec.md`, corrige primero `spec.md` (con autorización del usuario) y luego actualiza los demás.
+
 ### Logging y diagnóstico
 
 - El proyecto usa una arquitectura de logging estructurado.
