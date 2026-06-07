@@ -36,6 +36,10 @@ export const EnvSchema = z.object({
 
   RATE_LIMIT_RPS: z.coerce.number().int().positive().default(100),
 
+  OO_FORWARDER_URL: z.string().url().optional(),
+  OO_FORWARDER_KEY: z.string().min(1).optional(),
+  OO_FORWARDER_SERVICE: z.string().min(1).optional(),
+
   CORS_ALLOWED_ORIGINS: commaSeparated.default([]),
 
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']).default('info'),
