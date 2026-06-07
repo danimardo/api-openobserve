@@ -4,9 +4,11 @@
 import { O2SearchClient } from '../../src/infrastructure/openobserve/search';
 import { DomainError } from '../../src/domain/errors/domain-errors';
 
+const mockLogger = { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn(), fatal: jest.fn() };
+
 function makeClient(postFn: jest.Mock) {
   const http = { post: postFn };
-  return new O2SearchClient({ http } as never);
+  return new O2SearchClient({ http } as never, mockLogger as never);
 }
 
 const BASE_QUERY = { sql: 'SELECT * FROM s', size: 10, start_time: 0, end_time: 1 };
