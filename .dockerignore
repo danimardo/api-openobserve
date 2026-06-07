@@ -19,7 +19,6 @@ Dockerfile*
 .npmignore
 jest*.ts
 jest*.json
-tsconfig*.json
 .specify/
 specs/
 scripts/
