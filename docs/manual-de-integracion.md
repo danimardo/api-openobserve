@@ -947,7 +947,7 @@ curl "https://logs.tuempresa.com/api/v1/logs?service=payments_api\
 {
   "items": [
     {
-      "_timestamp": "2026-06-01T15:32:11.000Z",
+      "_timestamp": 1780327931000000,
       "service": "payments_api",
       "env": "prod",
       "level": "error",
@@ -967,6 +967,8 @@ curl "https://logs.tuempresa.com/api/v1/logs?service=payments_api\
   "request_id": "b7e2c9a1-..."
 }
 ```
+
+En los eventos de consulta, `_timestamp` puede ser un entero epoch en microsegundos como el del ejemplo. El campo `service` puede faltar en un evento; en ese caso, el parámetro `service` de la consulta indica el stream consultado (FR-015a).
 
 | Campo | Tipo | Descripción |
 |---|---|---|
@@ -997,7 +999,7 @@ la misma consulta y los mismos datos.
 
 ### 📍 `GET /api/v1/services`
 
-Devuelve qué servicios, entornos, scopes y límites tiene autorizados tu API key.
+Devuelve los servicios, scopes, tipo de cliente y orígenes autorizados de tu API key. `envs` y `read_policy` aparecen solo cuando están configurados.
 Es útil para que tu aplicación se autoconfigure o para depurar problemas de permisos.
 
 ```bash
@@ -1012,13 +1014,14 @@ curl https://logs.tuempresa.com/api/v1/services \
   "services": ["payments_api", "auth_service"],
   "envs": ["prod", "staging"],
   "scopes": ["write", "read"],
-  "limits": {
-    "max_query_window": null,
+  "client_type": "backend",
+  "allowed_origins": [],
+  "read_policy": {
+    "max_query_window": "30d",
     "max_limit": 1000,
     "allow_q": true,
     "response_profile": "full"
-  },
-  "request_id": "b7e2c9a1-4f3d-4b8e-a1c2-d3e4f5a6b7c8"
+  }
 }
 ```
 
@@ -1029,17 +1032,18 @@ curl https://logs.tuempresa.com/api/v1/services \
   "services": ["web_shop"],
   "envs": ["prod"],
   "scopes": ["read"],
-  "limits": {
+  "client_type": "frontend",
+  "allowed_origins": ["https://shop.example.com"],
+  "read_policy": {
     "max_query_window": "7d",
     "max_limit": 500,
     "allow_q": false,
     "response_profile": "frontend_reduced"
-  },
-  "request_id": "c1d2e3f4-5a6b-7c8d-9e0f-a1b2c3d4e5f6"
+  }
 }
 ```
 
-La respuesta **nunca** incluye hashes de secretos ni información de otras keys.
+La respuesta **nunca** incluye hashes de secretos ni información de otras keys. Si la key no configura `envs` o `read_policy`, esos campos se omiten. Este endpoint no devuelve `limits` ni `request_id`.
 
 ---
 

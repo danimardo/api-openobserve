@@ -115,8 +115,9 @@ paths:
       tags: [Descubrimiento]
       summary: Capacidades de la API key actual
       description: >
-        Devuelve servicios, entornos, scopes y límites de la key; nunca
-        hashes/secretos ni datos de otras keys (FR-027, US8).
+        Devuelve services, scopes, client_type y allowed_origins de la key;
+        envs y read_policy solo cuando están configurados. Nunca devuelve
+        limits, request_id, hashes/secretos ni datos de otras keys (FR-027, US8).
       responses:
         '200':
           description: Capacidades de la key
@@ -231,8 +232,11 @@ components:
         la respuesta. Puede incluir marcas de procesamiento (context_truncated)
         y source normalizado a 'unknown'. Usado en respuestas de keys backend/full.
       properties:
-        _timestamp: { type: string, description: ISO-8601 }
-        service: { type: string }
+        _timestamp:
+          oneOf:
+            - { type: string, description: ISO-8601 }
+            - { type: integer, format: int64, description: 'Epoch en microsegundos procedente de OpenObserve (FR-015a)' }
+        service: { type: string, description: 'Puede omitirse; el consumidor puede usar el service de la consulta (FR-015a)' }
         env: { type: string }
         level: { type: string, enum: [trace, debug, info, warn, error, fatal] }
         message: { type: string }
@@ -250,7 +254,10 @@ components:
       type: object
       description: Respuesta reducida para keys frontend (FR-018)
       properties:
-        _timestamp: { type: string }
+        _timestamp:
+          oneOf:
+            - { type: string, description: ISO-8601 }
+            - { type: integer, format: int64, description: 'Epoch en microsegundos procedente de OpenObserve (FR-015a)' }
         level: { type: string }
         message: { type: string }
         service: { type: string }
@@ -293,19 +300,20 @@ components:
 
     ServicesInfo:
       type: object
-      required: [services, envs, scopes, limits, request_id]
+      required: [services, scopes, client_type, allowed_origins]
       properties:
         services: { type: array, items: { type: string } }
-        envs: { type: array, items: { type: string } }
+        envs: { type: array, items: { type: string }, description: 'Opcional; ausencia significa no informado' }
         scopes: { type: array, items: { type: string, enum: [read, write] } }
-        limits:
+        client_type: { type: string, enum: [backend, frontend] }
+        allowed_origins: { type: array, items: { type: string } }
+        read_policy:
           type: object
           properties:
-            max_query_window: { type: [string, "null"], description: 'null para keys backend (sin límite de ventana temporal)' }
+            max_query_window: { type: string }
             max_limit: { type: integer }
             allow_q: { type: boolean }
             response_profile: { type: string, enum: [full, frontend_reduced] }
-        request_id: { type: string }
 
     Error:
       type: object

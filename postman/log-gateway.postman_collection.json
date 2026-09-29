@@ -88,7 +88,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "services"]
             },
-            "description": "Devuelve los servicios, scopes, tipo de cliente y read_policy asociados a la API key. Nunca incluye secret_hash (FR-027)."
+            "description": "Devuelve services, scopes, client_type y allowed_origins; envs y read_policy solo si están configurados. No incluye limits, request_id ni secret_hash (FR-027)."
           },
           "response": []
         }

@@ -157,7 +157,7 @@ Como plataforma de observabilidad, quiero que todos los eventos se normalicen (l
 
 ### User Story 8 - Descubrir capacidades de la API key (Priority: P3)
 
-Como consumidor de la API, quiero consultar qué servicios, entornos, scopes y límites tiene mi key, para configurar clientes y pruebas sin conocer secretos internos.
+Como consumidor de la API, quiero consultar los servicios, scopes y políticas configuradas de mi key, para configurar clientes y pruebas sin conocer secretos internos.
 
 **Why this priority**: Mejora la experiencia de integración (HU12). No es bloqueante para ingesta/consulta pero reduce fricción y errores de configuración.
 
@@ -165,9 +165,9 @@ Como consumidor de la API, quiero consultar qué servicios, entornos, scopes y l
 
 **Acceptance Scenarios**:
 
-1. **Given** una key válida, **When** llamo `GET /api/v1/services`, **Then** recibo servicios, entornos, scopes y límites aplicables a esa key.
+1. **Given** una key válida, **When** llamo `GET /api/v1/services`, **Then** recibo `services`, `scopes`, `client_type` y `allowed_origins`; recibo `envs` y `read_policy` cuando están configurados. El endpoint no devuelve `limits` ni `request_id`.
 2. **Given** cualquier key, **When** llamo el endpoint, **Then** la respuesta no incluye `secret_hash`, secretos ni configuración de otras keys.
-3. **Given** una key frontend, **When** llamo el endpoint, **Then** los límites reflejan `max_query_window`, `max_limit`, `allow_q: false` y `response_profile: frontend_reduced`.
+3. **Given** una key frontend con `read_policy`, **When** llamo el endpoint, **Then** `read_policy` refleja `max_query_window`, `max_limit`, `allow_q: false` y `response_profile: frontend_reduced`.
 
 ---
 
@@ -294,6 +294,7 @@ Como operador, quiero un `Dockerfile`, `.env.example` y documentación clara, pa
 **Consulta**
 
 - **FR-015**: El sistema MUST exponer `GET /api/v1/logs` exigiendo `service` y soportando filtros `from`, `to`, `level`, `env`, `q`, `trace_id`, `request_id`, `limit`, `cursor` y `sort`. Defaults: `from=now-1h`, `to=now`, `limit=100`, `sort=desc`; `limit` máximo para keys no frontend: `1000`; `level` puede aceptar uno o varios niveles separados por coma.
+- **FR-015a**: Los eventos de `GET /api/v1/logs` pueden conservar `_timestamp` como entero epoch en microsegundos devuelto por OpenObserve; `service` puede faltar en un evento aunque la consulta lo exija como parámetro. Los consumidores deben interpretar ese timestamp y pueden usar el `service` consultado como contexto de presentación.
 - **FR-016**: El sistema MUST construir SQL contra OpenObserve con allowlists para `service`/`level`/`env`/`sort`, acotando `limit` y escapando `q`/`trace_id`/`request_id`; los campos consultables son fijos.
 - **FR-017**: El sistema MUST devolver `items`, `next_cursor` (cursor opaco), `range_truncated`, `limit_truncated` y `request_id` en la respuesta de consulta. El sistema MUST NOT devolver `total` por defecto; si se añade `include_total=true`, MUST limitarse a keys backend/internas y documentarse como operación potencialmente costosa.
 - **FR-018**: El sistema MUST aplicar a keys frontend: solo su `service`/`env`, respuesta reducida (`response_profile: frontend_reduced`), eliminación de campos sensibles/conocidos del `context` de respuesta, prohibición de `q`, ventana máxima 7 días (recorte + `range_truncated: true`) y `limit` máximo 500 (recorte + `limit_truncated: true`).
@@ -311,7 +312,7 @@ Como operador, quiero un `Dockerfile`, `.env.example` y documentación clara, pa
 
 **Descubrimiento, salud y métricas**
 
-- **FR-027**: El sistema MUST exponer `GET /api/v1/services` devolviendo solo servicios, entornos, scopes y límites de la key actual, sin hashes/secretos ni datos de otras keys.
+- **FR-027**: El sistema MUST exponer `GET /api/v1/services` devolviendo `services`, `scopes`, `client_type` y `allowed_origins` de la key actual; `envs` y `read_policy` solo cuando estén configurados. La respuesta no incluye `limits` ni `request_id`, hashes/secretos ni datos de otras keys.
 - **FR-028**: El sistema MUST exponer públicamente `GET /api/v1/health` (liveness, sin comprobar O2) y `GET /api/v1/health/ready` (readiness, `200` si conecta con O2, `503` si no), sin requerir API key.
 - **FR-029**: El sistema MUST exponer públicamente `GET /api/v1/metrics` en formato Prometheus, sin requerir API key, con las métricas mínimas: `log_gateway_ingest_accepted_total`, `log_gateway_ingest_rejected_total`, `log_gateway_o2_delivery_failed_total`, `log_gateway_o2_delivery_retried_total`, `log_gateway_queue_depth`, `log_gateway_rate_limited_total`, `log_gateway_request_duration_seconds`, `log_gateway_redacted_fields_total`, `log_gateway_context_truncated_total`.
 
@@ -325,7 +326,7 @@ Como operador, quiero un `Dockerfile`, `.env.example` y documentación clara, pa
 **Observabilidad interna y seguridad de datos**
 
 - **FR-034**: El sistema MUST emitir sus propios logs estructurados a stdout/stderr y al stream `log_gateway`, sin secretos, credenciales, headers `Authorization`, cookies ni payloads completos de cliente, y sin bucles recursivos si falla el envío a O2.
-- **FR-035**: El sistema MUST incluir `request_id` en respuestas normales y de error, y usar el formato de error estándar `{ error: { code, message, details }, request_id }`.
+- **FR-035**: El sistema MUST incluir `request_id` en respuestas normales y de error, excepto la respuesta normal de `GET /api/v1/services` definida en FR-027, y usar el formato de error estándar `{ error: { code, message, details }, request_id }`.
 - **FR-036**: El sistema MUST permitir guardar IPs completas e IDs técnicos en logs. La PII directa conocida por nombre de campo MUST redactarse según FR-014; la detección avanzada de PII en texto libre queda fuera del MVP.
 
 **Configuración**
@@ -370,7 +371,7 @@ Como operador, quiero un `Dockerfile`, `.env.example` y documentación clara, pa
 - **SC-005**: Los parámetros de usuario en consulta no permiten inyección SQL en ninguna combinación probada de `q`/`trace_id`/`request_id` (CA11).
 - **SC-006**: Las keys frontend no pueden usar `q`, reciben respuesta reducida sin campos sensibles/conocidos en `context` y respetan los límites de 7 días y 500 resultados, con marcas `range_truncated`/`limit_truncated` cuando aplica (CA20).
 - **SC-007**: Los límites de body comprimido/descomprimido, lote, campos, longitud de valores de `context`, rate limit y cola llena se aplican y devuelven los códigos `413`/`429` correspondientes (CA12).
-- **SC-008**: `GET /api/v1/services` devuelve servicios, entornos, scopes y límites de la key actual sin filtrar secretos (CA19).
+- **SC-008**: `GET /api/v1/services` devuelve `services`, `scopes`, `client_type` y `allowed_origins` de la key actual, además de `envs` y `read_policy` cuando estén configurados, sin filtrar secretos (CA19).
 - **SC-009**: `GET /api/v1/metrics` expone las métricas mínimas de ingesta, rechazo, rate limit, fallos O2, cola, redacción y truncado en formato Prometheus (CA18).
 - **SC-010**: Los campos sensibles y PII conocida por nombre de campo se enmascaran antes de enviarse a OpenObserve en el 100% de los casos con campos conocidos (CA21).
 - **SC-011**: Liveness, readiness y métricas son públicos; readiness devuelve `503` cuando OpenObserve no está disponible y `200` cuando lo está (CA13).
