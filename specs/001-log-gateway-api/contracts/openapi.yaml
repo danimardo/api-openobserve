@@ -60,7 +60,7 @@ paths:
         - { in: query, name: to, required: false, schema: { type: string }, description: 'Default now' }
         - { in: query, name: level, required: false, schema: { type: string }, description: 'Uno o varios niveles separados por coma' }
         - { in: query, name: env, required: false, schema: { type: string } }
-        - { in: query, name: q, required: false, schema: { type: string }, description: 'Prohibido para keys frontend' }
+        - { in: query, name: q, required: false, schema: { type: string }, description: 'Busca coincidencias de texto en message sin distinguir mayúsculas de minúsculas; no requiere índices de texto completo. Prohibido para keys frontend (FR-015, FR-018)' }
         - { in: query, name: trace_id, required: false, schema: { type: string } }
         - { in: query, name: request_id, required: false, schema: { type: string } }
         - { in: query, name: limit, required: false, schema: { type: integer, default: 100, maximum: 1000 } }

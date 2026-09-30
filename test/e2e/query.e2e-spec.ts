@@ -14,6 +14,11 @@ const SECRET = 'e2e-query-secret-32bytes-xxxxxxxxxx';
 const KEY_ID = 'e2e-read-key';
 const SECRET_HASH = createHash('sha256').update(SECRET).digest('hex');
 const BEARER = `${KEY_ID}.${SECRET}`;
+const STREAM = process.env['E2E_QUERY_STREAM'] ?? 'e2e_test_stream';
+
+if (!/^[a-z0-9_]{3,64}$/.test(STREAM)) {
+  throw new Error('E2E_QUERY_STREAM must be a valid stream name');
+}
 
 const SKIP_E2E = !process.env['O2_URL'] || process.env['O2_URL']?.includes('localhost:5080');
 
@@ -37,8 +42,8 @@ describe('E2E: GET /api/v1/logs — paginación cursor (CA9, CA10)', () => {
             {
               id: KEY_ID,
               secret_hash: SECRET_HASH,
-              services: ['e2e_test_stream'],
-              scopes: ['read', 'write'],
+              services: [STREAM],
+              scopes: ['read'],
               client_type: 'backend',
               allowed_origins: [],
             },
@@ -58,11 +63,22 @@ describe('E2E: GET /api/v1/logs — paginación cursor (CA9, CA10)', () => {
     if (SKIP_E2E) return;
 
     const res = await request(app.getHttpServer())
-      .get('/api/v1/logs?service=e2e_test_stream&limit=5')
+      .get(`/api/v1/logs?service=${STREAM}&limit=5`)
       .set('Authorization', `Bearer ${BEARER}`);
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.items)).toBe(true);
     expect(res.body).toHaveProperty('request_id');
+  });
+
+  it('acepta q sobre message en OpenObserve real (FR-015, FR-016, CA9)', async () => {
+    if (SKIP_E2E) return;
+
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/logs?service=${STREAM}&q=error&limit=1`)
+      .set('Authorization', `Bearer ${BEARER}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
   });
 });

@@ -933,7 +933,7 @@ curl "https://logs.tuempresa.com/api/v1/logs?service=payments_api\
 | `to` | string (ISO-8601) | `now` | Fin del rango temporal |
 | `level` | string | — | Uno o varios niveles separados por coma: `error,warn` |
 | `env` | string | — | Filtrar por entorno |
-| `q` | string | — | Búsqueda de texto libre en `message`. **Prohibido para keys frontend** |
+| `q` | string | — | Busca coincidencias de texto en `message` sin distinguir mayúsculas de minúsculas. No busca en otros campos ni requiere índices de texto completo. **Prohibido para keys frontend** |
 | `trace_id` | string | — | Filtrar por ID de traza exacto |
 | `request_id` | string | — | Filtrar por ID de request exacto |
 | `limit` | integer | `100` | Número máximo de resultados (máx. `1000` para keys backend) |

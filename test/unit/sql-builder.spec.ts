@@ -33,7 +33,13 @@ describe('buildQuery — prevención de inyección SQL (FR-016, CA11)', () => {
 
   it('escapa comillas simples en q para evitar que salgan del string SQL (CA11)', () => {
     const { sql } = buildQuery({ ...BASE, q: "O'Brien" });
-    expect(sql).toContain("O''Brien");
+    expect(sql).toContain("match_field_ignore_case(message, 'O''Brien')");
+  });
+
+  it('busca q solo en message sin depender de índices de texto completo (FR-015, FR-016, CA9)', () => {
+    const { sql } = buildQuery({ ...BASE, q: 'ERROR' });
+    expect(sql).toContain("match_field_ignore_case(message, 'ERROR')");
+    expect(sql).not.toContain('match_all');
   });
 
   it('elimina punto y coma en q para bloquear inyección multiseatencia', () => {
@@ -41,7 +47,7 @@ describe('buildQuery — prevención de inyección SQL (FR-016, CA11)', () => {
     // El ';' se elimina: no hay múltiples sentencias en el SQL generado
     expect(sql).not.toContain(';');
     // Las comillas se escapan: el valor queda como string literal en SQL (inofensivo)
-    expect(sql).toContain('match_all_indexed_ignore_case(');
+    expect(sql).toContain('match_field_ignore_case(message, ');
   });
 
   it('elimina comentarios inline (--) en q', () => {

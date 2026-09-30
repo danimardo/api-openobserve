@@ -60,10 +60,11 @@ Como operador o integración interna, quiero consultar logs de un servicio autor
 **Acceptance Scenarios**:
 
 1. **Given** una API key `read` autorizada para `payments_api`, **When** consulto `GET /api/v1/logs?service=payments_api&level=error&from=...&to=...`, **Then** recibo `200` con `items` filtrados y `next_cursor`.
-2. **Given** una consulta sin `service`, **When** la envío, **Then** recibo `400 validation_error`.
-3. **Given** una API key sin autorización para el `service` solicitado, **When** consulto, **Then** recibo `403 forbidden`.
-4. **Given** valores maliciosos en `q`, `trace_id` o `request_id`, **When** consulto, **Then** el SQL generado se escapa correctamente y no se ejecuta inyección.
-5. **Given** un `next_cursor` devuelto en una respuesta previa, **When** lo paso como `cursor`, **Then** obtengo la página siguiente de forma estable.
+2. **Given** una API key backend con scope `read`, **When** consulto con `q`, **Then** se buscan coincidencias de texto en `message` sin distinguir mayúsculas de minúsculas, sin depender de los índices de texto completo del stream.
+3. **Given** una consulta sin `service`, **When** la envío, **Then** recibo `400 validation_error`.
+4. **Given** una API key sin autorización para el `service` solicitado, **When** consulto, **Then** recibo `403 forbidden`.
+5. **Given** valores maliciosos en `q`, `trace_id` o `request_id`, **When** consulto, **Then** el SQL generado se escapa correctamente y no se ejecuta inyección.
+6. **Given** un `next_cursor` devuelto en una respuesta previa, **When** lo paso como `cursor`, **Then** obtengo la página siguiente de forma estable.
 
 ---
 
@@ -293,9 +294,9 @@ Como operador, quiero un `Dockerfile`, `.env.example` y documentación clara, pa
 
 **Consulta**
 
-- **FR-015**: El sistema MUST exponer `GET /api/v1/logs` exigiendo `service` y soportando filtros `from`, `to`, `level`, `env`, `q`, `trace_id`, `request_id`, `limit`, `cursor` y `sort`. Defaults: `from=now-1h`, `to=now`, `limit=100`, `sort=desc`; `limit` máximo para keys no frontend: `1000`; `level` puede aceptar uno o varios niveles separados por coma.
+- **FR-015**: El sistema MUST exponer `GET /api/v1/logs` exigiendo `service` y soportando filtros `from`, `to`, `level`, `env`, `q`, `trace_id`, `request_id`, `limit`, `cursor` y `sort`. `q` MUST buscar coincidencias de texto en el campo `message` sin distinguir mayúsculas de minúsculas y sin requerir índices de texto completo del stream. Defaults: `from=now-1h`, `to=now`, `limit=100`, `sort=desc`; `limit` máximo para keys no frontend: `1000`; `level` puede aceptar uno o varios niveles separados por coma.
 - **FR-015a**: Los eventos de `GET /api/v1/logs` pueden conservar `_timestamp` como entero epoch en microsegundos devuelto por OpenObserve; `service` puede faltar en un evento aunque la consulta lo exija como parámetro. Los consumidores deben interpretar ese timestamp y pueden usar el `service` consultado como contexto de presentación.
-- **FR-016**: El sistema MUST construir SQL contra OpenObserve con allowlists para `service`/`level`/`env`/`sort`, acotando `limit` y escapando `q`/`trace_id`/`request_id`; los campos consultables son fijos.
+- **FR-016**: El sistema MUST construir SQL contra OpenObserve con allowlists para `service`/`level`/`env`/`sort`, acotando `limit` y escapando `q`/`trace_id`/`request_id`; los campos consultables son fijos. Para `q` MUST usar `match_field_ignore_case(message, <valor escapado>)`.
 - **FR-017**: El sistema MUST devolver `items`, `next_cursor` (cursor opaco), `range_truncated`, `limit_truncated` y `request_id` en la respuesta de consulta. El sistema MUST NOT devolver `total` por defecto; si se añade `include_total=true`, MUST limitarse a keys backend/internas y documentarse como operación potencialmente costosa.
 - **FR-018**: El sistema MUST aplicar a keys frontend: solo su `service`/`env`, respuesta reducida (`response_profile: frontend_reduced`), eliminación de campos sensibles/conocidos del `context` de respuesta, prohibición de `q`, ventana máxima 7 días (recorte + `range_truncated: true`) y `limit` máximo 500 (recorte + `limit_truncated: true`).
 - **FR-019**: El sistema MUST devolver `502 openobserve_error` cuando OpenObserve falle en una operación de consulta síncrona.

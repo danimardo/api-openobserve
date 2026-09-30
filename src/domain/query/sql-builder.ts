@@ -87,7 +87,7 @@ export function buildQuery(opts: QueryBuildOptions): BuiltQuery {
 
   if (opts.q) {
     const escaped = escapeSqlString(opts.q);
-    conditions.push(`match_all_indexed_ignore_case('${escaped}')`);
+    conditions.push(`match_field_ignore_case(message, '${escaped}')`);
   }
 
   if (opts.trace_id) {

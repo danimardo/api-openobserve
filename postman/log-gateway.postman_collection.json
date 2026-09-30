@@ -285,7 +285,7 @@
                 { "key": "limit", "value": "50" }
               ]
             },
-            "description": "Búsqueda de texto libre sobre todos los campos indexados. Solo disponible para keys de tipo 'backend'; las frontend keys reciben 403 (FR-018)."
+            "description": "Busca coincidencias de texto en message sin distinguir mayúsculas de minúsculas; no requiere índices de texto completo del stream. Solo disponible para keys de tipo 'backend'; las frontend keys reciben 403 (FR-015, FR-018)."
           },
           "response": []
         },
